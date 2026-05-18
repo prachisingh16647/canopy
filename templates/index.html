@@ -1,0 +1,267 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Library Management Dashboard</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+    <link rel="stylesheet" href="{% static 'style.css' %}">
+</head>
+
+<body>
+
+    <div class="container">
+
+        <!-- ================= Sidebar ================= -->
+        <aside class="sidebar">
+            <div class="logo">
+                <i class="fa-solid fa-book-open-reader"></i>
+                <h2>Library</h2>
+            </div>
+            <ul class="menu">
+                <li class="active" onclick="location.href='{% url 'dashboard' %}'">
+                    <i class="fa-solid fa-house"></i>
+                    <span>Dashboard</span>
+                </li>
+                <li onclick="location.href='{% url 'books_page' %}'">
+                    <i class="fa-solid fa-book"></i>
+                    <span>Books</span>
+                </li>
+                <li onclick="location.href='{% url 'members_page' %}'">
+                    <i class="fa-solid fa-users"></i>
+                    <span>Members</span>
+                </li>
+                <li onclick="location.href='{% url 'issue_page' %}'">
+                    <i class="fa-solid fa-arrow-right"></i>
+                    <span>Issue Book</span>
+                </li>
+                <li onclick="location.href='{% url 'return_page' %}'">
+                    <i class="fa-solid fa-arrow-left"></i>
+                    <span>Return Book</span>
+                </li>
+                <li onclick="location.href='{% url 'due_page' %}'">
+                    <i class="fa-solid fa-clock"></i>
+                    <span>Due Books</span>
+                </li>
+                <li onclick="location.href='{% url 'reports_page' %}'">
+                    <i class="fa-solid fa-chart-column"></i>
+                    <span>Reports</span>
+                </li>
+                <li onclick="location.href='{% url 'settings_page' %}'">
+                    <i class="fa-solid fa-gear"></i>
+                    <span>Settings</span>
+                </li>
+                <li onclick="location.href='{% url 'logout' %}'">
+                    <i class="fa-solid fa-right-from-bracket"></i>
+                    <span>Logout</span>
+                </li>
+            </ul>
+        </aside>
+
+        <!-- ================= Main ================= -->
+        <main class="main">
+            <header>
+                <div>
+                    <h1>Dashboard</h1>
+                    <p>Welcome back, Librarian 👋</p>
+                </div>
+                <div class="top-right">
+                    <div class="search-box">
+                        <i class="fa-solid fa-search"></i>
+                        <input type="text" placeholder="Search books..." autocomplete="off">
+                    </div>
+                    <button id="themeBtn">
+                        <i class="fa-solid fa-moon"></i>
+                    </button>
+                    <div class="notification" id="notificationBell">
+                        <i class="fa-solid fa-bell"></i>
+                        <span id="notifBadge">0</span>
+                        <div class="notification-dropdown" id="notificationDropdown">
+                            <h4>Overdue Books</h4>
+                            <ul id="notificationList">
+                                <li class="notif-empty">Loading...</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="profile" onclick="location.href='{% url 'settings_page' %}'" style="cursor:pointer;">
+                        {% if profile.profile_picture %}
+                            <img src="{{ profile.profile_picture.url }}" alt="profile">
+                        {% else %}
+                            <img src="https://ui-avatars.com/api/?name={{ request.user.username }}&background=2d6a4f&color=fff" alt="profile">
+                        {% endif %}
+                        <div>
+                            <h4>{{ request.user.username }}</h4>
+                            <p>{% if request.user.is_superuser %}Admin{% else %}Librarian{% endif %}</p>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- ================= Statistics ================= -->
+            <section class="cards">
+                <div class="card blue">
+                    <div>
+                        <h4>Total Books</h4>
+                        <h2 class="counter" id="totalBooks" data-target="0">0</h2>
+                        <p>+12 this month</p>
+                    </div>
+                    <div class="icon">
+                        <i class="fa-solid fa-book"></i>
+                    </div>
+                </div>
+                <div class="card green">
+                    <div>
+                        <h4>Members</h4>
+                        <h2 class="counter" id="totalMembers" data-target="0">0</h2>
+                        <p>+8 this week</p>
+                    </div>
+                    <div class="icon">
+                        <i class="fa-solid fa-users"></i>
+                    </div>
+                </div>
+                <div class="card orange">
+                    <div>
+                        <h4>Borrowed</h4>
+                        <h2 class="counter" id="totalBorrowed" data-target="0">0</h2>
+                        <p>Currently issued</p>
+                    </div>
+                    <div class="icon">
+                        <i class="fa-solid fa-book-open"></i>
+                    </div>
+                </div>
+                <div class="card red">
+                    <div>
+                        <h4>Overdue</h4>
+                        <h2 class="counter" id="totalOverdue" data-target="0">0</h2>
+                        <p>Need attention</p>
+                    </div>
+                    <div class="icon">
+                        <i class="fa-solid fa-clock"></i>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ================= Dashboard Content ================= -->
+            <div class="dashboard-content">
+                <!-- Left Side -->
+                <div class="left-panel">
+                    <!-- Borrow Statistics -->
+                    <div class="chart-box">
+                        <div class="title">
+                            <h3>Borrow Statistics</h3>
+                            <button>This Month</button>
+                        </div>
+                        <canvas id="borrowChart"></canvas>
+                    </div>
+
+                    <!-- Recent Books -->
+                    <div class="table-box">
+                        <div class="title">
+                            <h3>Recent Books</h3>
+                            <button onclick="location.href='{% url 'books_page' %}'">View All</button>
+                        </div>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Book</th>
+                                    <th>Author</th>
+                                    <th>Status</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="recentBooksBody">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Right Side -->
+                <div class="right-panel">
+                    <!-- Quick Actions -->
+                    <div class="quick-actions">
+                        <h3>Quick Actions</h3>
+                        <button id="quickAddBookBtn"><i class="fa-solid fa-plus"></i> Add Book</button>
+                        <button id="quickIssueBookBtn"><i class="fa-solid fa-book-open"></i> Issue Book</button>
+                        <button id="quickReturnBookBtn"><i class="fa-solid fa-rotate-left"></i> Return Book</button>
+                        <button id="quickAddMemberBtn"><i class="fa-solid fa-user-plus"></i> Add Member</button>
+                    </div>
+
+                    <!-- Recent Activity -->
+                    <div class="activity-box">
+                        <h3>Recent Activity</h3>
+                        <ul id="recentActivityList">
+                            <li>Loading...</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Chart.js -->
+            <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+        </main>
+    </div>
+
+    <!-- Modals Structure -->
+    <div id="addBookModal" class="modal-overlay">
+        <div class="modal-box">
+            <h3>Add New Book</h3>
+            <input type="text" id="newBookTitle" placeholder="Book title">
+            <input type="text" id="newBookAuthor" placeholder="Author">
+            <input type="text" id="newBookCover" placeholder="Cover Image URL(optional)">
+            <div class="modal-actions">
+                <button id="cancelAddBook">Cancel</button>
+                <button id="submitAddBook">Add Book</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="issueBookModal" class="modal-overlay">
+        <div class="modal-box">
+            <h3>Issue Book</h3>
+            <select id="issueBookSelect"></select>
+            <select id="issueMemberSelect"></select>
+            <input type="date" id="issueDueDate">
+            <div class="modal-actions">
+                <button id="cancelIssueBook">Cancel</button>
+                <button id="submitIssueBook">Issue Book</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="returnBookModal" class="modal-overlay">
+        <div class="modal-box">
+            <h3>Return Book</h3>
+            <select id="returnRecordSelect"></select>
+            <div class="modal-actions">
+                <button id="cancelReturnBook">Cancel</button>
+                <button id="submitReturnBook">Return Book</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="addMemberModal" class="modal-overlay">
+        <div class="modal-box">
+            <h3>Add New Member</h3>
+            <input type="text" id="newMemberName" placeholder="Full Name">
+            <input type="email" id="newMemberEmail" placeholder="Email">
+            <input type="text" id="newMemberPhone" placeholder="Phone (optional)">
+            <hr style="border:none;border-top:1px solid #eee;margin:10px 0 16px;">
+            <p style="font-size:12px;color:#777;margin-bottom:10px;">Optional: give them login access to the member portal</p>
+            <input type="text" id="newMemberUsername" placeholder="Username (optional)">
+            <input type="password" id="newMemberPassword" placeholder="Password (optional)">
+            <div class="modal-actions">
+                <button id="cancelAddMember">Cancel</button>
+                <button id="submitAddMember">Add Member</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="{% static 'script.js' %}"></script>
+</body>
+
+</html>

@@ -1,0 +1,74 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Reports - Library Management</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{% static 'style.css' %}">
+</head>
+<body>
+
+<div class="container">
+
+<aside class="sidebar">
+<div class="logo">
+<i class="fa-solid fa-book-open-reader"></i>
+<h2>Library</h2>
+</div>
+<ul class="menu">
+<li onclick="location.href='{% url 'dashboard' %}'"><i class="fa-solid fa-house"></i><span>Dashboard</span></li>
+<li onclick="location.href='{% url 'books_page' %}'"><i class="fa-solid fa-book"></i><span>Books</span></li>
+<li onclick="location.href='{% url 'members_page' %}'"><i class="fa-solid fa-users"></i><span>Members</span></li>
+<li onclick="location.href='{% url 'issue_page' %}'"><i class="fa-solid fa-arrow-right"></i><span>Issue Book</span></li>
+<li onclick="location.href='{% url 'return_page' %}'"><i class="fa-solid fa-arrow-left"></i><span>Return Book</span></li>
+<li onclick="location.href='{% url 'due_page' %}'"><i class="fa-solid fa-clock"></i><span>Due Books</span></li>
+<li class="active"><i class="fa-solid fa-chart-column"></i><span>Reports</span></li>
+<li onclick="location.href='{% url 'settings_page' %}'"><i class="fa-solid fa-gear"></i><span>Settings</span></li>
+<li onclick="location.href='{% url 'logout' %}'"><i class="fa-solid fa-right-from-bracket"></i><span>Logout</span></li>
+</ul>
+</aside>
+
+<main class="main">
+
+<header>
+<div>
+<h1>Reports</h1>
+<p>Library activity overview</p>
+</div>
+</header>
+
+<section class="cards">
+<div class="card blue">
+<div><h4>Total Books</h4><h2 id="rTotalBooks">0</h2></div>
+<div class="icon"><i class="fa-solid fa-book"></i></div>
+</div>
+<div class="card green">
+<div><h4>Total Members</h4><h2 id="rTotalMembers">0</h2></div>
+<div class="icon"><i class="fa-solid fa-users"></i></div>
+</div>
+<div class="card orange">
+<div><h4>Currently Borrowed</h4><h2 id="rBorrowed">0</h2></div>
+<div class="icon"><i class="fa-solid fa-book-open"></i></div>
+</div>
+<div class="card red">
+<div><h4>Overdue</h4><h2 id="rOverdue">0</h2></div>
+<div class="icon"><i class="fa-solid fa-clock"></i></div>
+</div>
+</section>
+
+<div class="table-box" style="margin-top:25px;">
+<div class="title"><h3>Summary</h3></div>
+<p style="padding:10px 0;">Total books returned so far: <strong id="rReturned">0</strong></p>
+</div>
+
+</main>
+
+</div>
+
+<script src="{% static 'reports.js' %}"></script>
+
+</body>
+</html>

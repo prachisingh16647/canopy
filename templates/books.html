@@ -1,0 +1,88 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Books - Library Management</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{% static 'style.css' %}">
+</head>
+<body>
+
+<div class="container">
+
+<aside class="sidebar">
+<div class="logo">
+<i class="fa-solid fa-book-open-reader"></i>
+<h2>Library</h2>
+</div>
+<ul class="menu">
+<li onclick="location.href='{% url 'dashboard' %}'"><i class="fa-solid fa-house"></i><span>Dashboard</span></li>
+<li class="active"><i class="fa-solid fa-book"></i><span>Books</span></li>
+<li onclick="location.href='{% url 'members_page' %}'"><i class="fa-solid fa-users"></i><span>Members</span></li>
+<li onclick="location.href='{% url 'issue_page' %}'"><i class="fa-solid fa-arrow-right"></i><span>Issue Book</span></li>
+<li onclick="location.href='{% url 'return_page' %}'"><i class="fa-solid fa-arrow-left"></i><span>Return Book</span></li>
+<li onclick="location.href='{% url 'due_page' %}'"><i class="fa-solid fa-clock"></i><span>Due Books</span></li>
+<li onclick="location.href='{% url 'reports_page' %}'"><i class="fa-solid fa-chart-column"></i><span>Reports</span></li>
+<li onclick="location.href='{% url 'settings_page' %}'"><i class="fa-solid fa-gear"></i><span>Settings</span></li>
+<li onclick="location.href='{% url 'logout' %}'"><i class="fa-solid fa-right-from-bracket"></i><span>Logout</span></li>
+</ul>
+</aside>
+
+<main class="main">
+
+<header>
+<div>
+<h1>All Books</h1>
+<p>Full library catalog</p>
+</div>
+<div class="top-right">
+<div class="search-box">
+<i class="fa-solid fa-search"></i>
+<input type="text" id="bookSearch" placeholder="Search books..." autocomplete="off">
+</div>
+</div>
+</header>
+
+<div class="table-box">
+<div class="title">
+<h3>Book Catalog</h3>
+<button id="openAddBookBtn"><i class="fa-solid fa-plus"></i> Add Book</button>
+</div>
+<table>
+<thead>
+<tr>
+<th>Book</th>
+<th>Author</th>
+<th>Status</th>
+<th>Action</th>
+</tr>
+</thead>
+<tbody id="allBooksBody">
+</tbody>
+</table>
+</div>
+
+</main>
+
+</div>
+
+<div id="addBookModal" class="modal-overlay">
+    <div class="modal-box">
+        <h3>Add New Book</h3>
+        <input type="text" id="newBookTitle" placeholder="Book title">
+        <input type="text" id="newBookAuthor" placeholder="Book Author">
+        <input type="text" id="newBookCover" placeholder="Book Cover Image URL(optional)">
+        <div class="modal-actions">
+            <button id="cancelAddBook">Cancel</button>
+            <button id="submitAddBook">Add Book</button>
+        </div>
+    </div>
+</div>
+
+<script src="{% static 'books.js' %}"></script>
+
+</body>
+</html>

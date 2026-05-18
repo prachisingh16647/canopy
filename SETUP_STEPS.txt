@@ -1,0 +1,51 @@
+SETUP STEPS
+========================================================================
+
+--- FOR SETTINGS PAGE (profile picture / username / password) ---
+1. pip install Pillow
+2. Copy files:
+   - templates/settings.html   -> canopy/templates/settings.html
+   - library/models.py         -> library/models.py
+   - library/views.py          -> library/views.py
+   - canopy/settings.py        -> canopy/canopy/settings.py
+   - canopy_project_urls.py    -> canopy/canopy/urls.py (rename it)
+3. Create a "media" folder in your project root (same level as manage.py)
+
+--- FOR MEMBER PORTAL (new) ---
+1. Copy these NEW template files:
+   - templates/member_login.html
+   - templates/member_signup.html
+   - templates/member_dashboard.html
+   - templates/member_settings.html
+
+2. Overwrite (again, latest versions in this zip):
+   - library/models.py   (Member now has a `user` field)
+   - library/views.py    (member login/signup/dashboard/settings + access control)
+   - library/urls.py     (new member/ routes)
+   - templates/index.html   (Add Member modal has optional username/password fields)
+   - templates/members.html (same)
+   - static/script.js
+   - static/members.js
+
+3. Run migrations (Member model changed — needs a new `user_id` column):
+   python manage.py makemigrations library
+   python manage.py migrate
+
+4. Test it:
+   - Librarian: http://127.0.0.1:8000/library/login/  (unchanged)
+   - Member signup: http://127.0.0.1:8000/library/member/signup/
+   - Member login:  http://127.0.0.1:8000/library/member/login/
+   - Member dashboard (after login): http://127.0.0.1:8000/library/member/
+
+   Also try: as librarian, use "Add Member" and fill in the optional
+   username/password fields — that member can then log into the member
+   portal with those credentials immediately, no signup needed.
+
+IMPORTANT NOTES:
+- Existing members (added before this update) will have no linked user
+  account (user=NULL) — they simply can't log in until either the
+  librarian edits them via admin, or you build an "edit member" feature.
+  This won't break anything else.
+- A member visiting an admin URL (e.g. /library/books/) gets redirected
+  to their own dashboard. A librarian visiting /library/member/ gets
+  redirected to the admin dashboard. Both logins are fully separated.

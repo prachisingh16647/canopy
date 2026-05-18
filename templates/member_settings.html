@@ -1,0 +1,112 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Settings - Member Portal</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{% static 'style.css' %}">
+<style>
+  .table-box input[type="text"],
+  .table-box input[type="email"],
+  .table-box input[type="password"] {
+    width:100%;
+    padding:14px;
+    margin-bottom:14px;
+    border:1px solid #ddd;
+    border-radius:8px;
+    font-size:15px;
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+
+<aside class="sidebar">
+<div class="logo">
+<i class="fa-solid fa-book-open-reader"></i>
+<h2>Library</h2>
+</div>
+<ul class="menu">
+<li onclick="location.href='{% url 'member_dashboard' %}'"><i class="fa-solid fa-house"></i><span>My Books</span></li>
+<li class="active"><i class="fa-solid fa-gear"></i><span>Settings</span></li>
+<li onclick="location.href='{% url 'member_logout' %}'"><i class="fa-solid fa-right-from-bracket"></i><span>Logout</span></li>
+</ul>
+</aside>
+
+<main class="main">
+
+<header>
+<div>
+<h1>Settings</h1>
+<p>Manage your account</p>
+</div>
+</header>
+
+{% if message %}
+<div class="table-box" style="max-width:500px;background:#dcfce7;">
+  <p style="color:#166534;font-weight:500;"><i class="fa-solid fa-circle-check"></i> {{ message }}</p>
+</div>
+{% endif %}
+{% if error %}
+<div class="table-box" style="max-width:500px;background:#fee2e2;">
+  <p style="color:#991b1b;font-weight:500;"><i class="fa-solid fa-circle-exclamation"></i> {{ error }}</p>
+</div>
+{% endif %}
+
+<div class="table-box" style="max-width:500px;">
+<div class="title"><h3>Profile</h3></div>
+
+<form method="POST">
+  {% csrf_token %}
+  <input type="hidden" name="form_type" value="profile_info">
+
+  <label style="font-size:13px;color:#777;display:block;margin-bottom:6px;">Full Name</label>
+  <input type="text" name="name" value="{{ member.name }}" required>
+
+  <label style="font-size:13px;color:#777;display:block;margin-bottom:6px;">Phone</label>
+  <input type="text" name="phone" value="{{ member.phone }}">
+
+  <label style="font-size:13px;color:#777;display:block;margin-bottom:6px;">Email</label>
+  <input type="email" value="{{ member.email }}" disabled style="background:#f3f4f6;">
+
+  <div class="modal-actions" style="justify-content:flex-start;">
+    <button id="submitAddBook" type="submit">Save Changes</button>
+  </div>
+</form>
+</div>
+
+<div class="table-box" style="max-width:500px;">
+<div class="title"><h3>Change Password</h3></div>
+
+<form method="POST">
+  {% csrf_token %}
+  <input type="hidden" name="form_type" value="change_password">
+
+  <label style="font-size:13px;color:#777;display:block;margin-bottom:6px;">Current password</label>
+  {{ password_form.old_password }}
+  {% if password_form.old_password.errors %}<p style="color:#ef4444;font-size:13px;">{{ password_form.old_password.errors.0 }}</p>{% endif %}
+
+  <label style="font-size:13px;color:#777;display:block;margin-bottom:6px;">New password</label>
+  {{ password_form.new_password1 }}
+  {% if password_form.new_password1.errors %}<p style="color:#ef4444;font-size:13px;">{{ password_form.new_password1.errors.0 }}</p>{% endif %}
+
+  <label style="font-size:13px;color:#777;display:block;margin-bottom:6px;">Confirm new password</label>
+  {{ password_form.new_password2 }}
+  {% if password_form.new_password2.errors %}<p style="color:#ef4444;font-size:13px;">{{ password_form.new_password2.errors.0 }}</p>{% endif %}
+
+  <div class="modal-actions" style="justify-content:flex-start;">
+    <button id="submitAddMember" type="submit">Update Password</button>
+  </div>
+</form>
+</div>
+
+</main>
+
+</div>
+
+</body>
+</html>

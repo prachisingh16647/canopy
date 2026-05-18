@@ -1,0 +1,66 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Issue Book - Library Management</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'style.css' %}">
+</head>
+<body>
+
+<div class="container">
+
+    <!-- ================= Sidebar ================= -->
+    <aside class="sidebar">
+        <div class="logo">
+            <i class="fa-solid fa-book-open-reader"></i>
+            <h2>Library</h2>
+        </div>
+        <ul class="menu">
+            <li onclick="location.href='{% url 'dashboard' %}'"><i class="fa-solid fa-house"></i><span>Dashboard</span></li>
+            <li onclick="location.href='{% url 'books_page' %}'"><i class="fa-solid fa-book"></i><span>Books</span></li>
+            <li onclick="location.href='{% url 'members_page' %}'"><i class="fa-solid fa-users"></i><span>Members</span></li>
+            <li class="active"><i class="fa-solid fa-arrow-right"></i><span>Issue Book</span></li>
+            <li onclick="location.href='{% url 'return_page' %}'"><i class="fa-solid fa-arrow-left"></i><span>Return Book</span></li>
+            <li onclick="location.href='{% url 'due_page' %}'"><i class="fa-solid fa-clock"></i><span>Due Books</span></li>
+            <li onclick="location.href='{% url 'reports_page' %}'"><i class="fa-solid fa-chart-column"></i><span>Reports</span></li>
+            <li onclick="location.href='{% url 'settings_page' %}'"><i class="fa-solid fa-gear"></i><span>Settings</span></li>
+            <li onclick="location.href='{% url 'logout' %}'"><i class="fa-solid fa-right-from-bracket"></i><span>Logout</span></li>
+        </ul>
+    </aside>
+
+    <!-- ================= Main ================= -->
+    <main class="main">
+        <header>
+            <div>
+                <h1>Issue Book</h1>
+                <p>Assign a book to a member</p>
+            </div>
+        </header>
+
+        <div class="table-box" style="max-width:500px;">
+            <div class="title">
+                <h3>Issue Details</h3>
+            </div>
+
+            <select id="issueBookSelect"></select>
+            <select id="issueMemberSelect"></select>
+            <input type="date" id="issueDueDate" style="width:100%;padding:14px;margin-bottom:14px;border:1px solid #ddd;border-radius:8px;font-size:16px;">
+
+            <button id="submitIssueBook" style="width:100%;padding:15px;border:none;background:#2d6a4f;color:white;border-radius:12px;font-size:15px;cursor:pointer;">
+                Issue Book
+            </button>
+
+            <p id="issueMsg" style="margin-top:15px;color:#2d6a4f;font-weight:500;"></p>
+        </div>
+    </main>
+
+</div>
+
+<script src="{% static 'issue-book.js' %}"></script>
+
+</body>
+</html>

@@ -1,0 +1,113 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>My Library - Member Portal</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{% static 'style.css' %}">
+</head>
+<body>
+
+<div class="container">
+
+<aside class="sidebar">
+<div class="logo">
+<i class="fa-solid fa-book-open-reader"></i>
+<h2>Library</h2>
+</div>
+<ul class="menu">
+<li class="active"><i class="fa-solid fa-house"></i><span>My Books</span></li>
+<li onclick="location.href='{% url 'member_settings' %}'"><i class="fa-solid fa-gear"></i><span>Settings</span></li>
+<li onclick="location.href='{% url 'member_logout' %}'"><i class="fa-solid fa-right-from-bracket"></i><span>Logout</span></li>
+</ul>
+</aside>
+
+<main class="main">
+
+<header>
+<div>
+<h1>Welcome, {{ member.name }}</h1>
+<p>Here's what you currently have borrowed</p>
+</div>
+</header>
+
+<div class="table-box">
+<div class="title">
+<h3>Currently Borrowed</h3>
+</div>
+
+{% if active_books %}
+<table>
+<thead>
+<tr>
+<th>Book</th>
+<th>Author</th>
+<th>Due Date</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody>
+{% for book in active_books %}
+<tr>
+<td>
+<div class="book">
+<img src="{{ book.cover }}">
+<span>{{ book.title }}</span>
+</div>
+</td>
+<td>{{ book.author }}</td>
+<td>{{ book.due_date }}</td>
+<td>
+{% if book.overdue %}
+<span class="borrowed">Overdue</span>
+{% else %}
+<span class="available">On Time</span>
+{% endif %}
+</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+{% else %}
+<p style="padding:20px 0;color:#777;">You don't have any books borrowed right now.</p>
+{% endif %}
+</div>
+
+<div class="table-box" style="margin-top:25px;">
+<div class="title">
+<h3>Borrow History</h3>
+</div>
+
+{% if history %}
+<table>
+<thead>
+<tr>
+<th>Book</th>
+<th>Borrowed On</th>
+<th>Returned On</th>
+</tr>
+</thead>
+<tbody>
+{% for h in history %}
+<tr>
+<td>{{ h.title }}</td>
+<td>{{ h.borrowed_on }}</td>
+<td>{{ h.returned_on }}</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+{% else %}
+<p style="padding:20px 0;color:#777;">No past borrows yet.</p>
+{% endif %}
+</div>
+
+</main>
+
+</div>
+
+</body>
+</html>
