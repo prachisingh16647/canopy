@@ -17,7 +17,7 @@ themeBtn.addEventListener("click", () => {
 
 /*==================== FETCH REAL DATA ====================*/
 
-fetch("http://127.0.0.1:8000/library/api/dashboard/")
+fetch("/library/api/dashboard/")
   .then(response => response.json())
   .then(data => {
     document.getElementById("totalBooks").setAttribute("data-target", data.total_books);
@@ -292,7 +292,7 @@ document.getElementById("submitAddBook").addEventListener("click", () => {
     return;
   }
 
-  fetch("http://127.0.0.1:8000/library/api/add-book/", {
+  fetch("/library/api/add-book/", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ title, author, cover })
@@ -311,7 +311,7 @@ document.getElementById("submitAddBook").addEventListener("click", () => {
 const issueBookModal = document.getElementById("issueBookModal");
 
 quickActionButtons[1].addEventListener("click", () => {
-  fetch("http://127.0.0.1:8000/library/api/books-members/")
+  fetch("/library/api/books-members/")
     .then(res => res.json())
     .then(data => {
       const bookSelect = document.getElementById("issueBookSelect");
@@ -338,7 +338,7 @@ document.getElementById("submitIssueBook").addEventListener("click", () => {
     return;
   }
 
-  fetch("http://127.0.0.1:8000/library/api/issue-book/", {
+  fetch("/library/api/issue-book/", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ book_id, member_id, due_date })
@@ -356,7 +356,7 @@ document.getElementById("submitIssueBook").addEventListener("click", () => {
 const returnBookModal = document.getElementById("returnBookModal");
 
 quickActionButtons[2].addEventListener("click", () => {
-  fetch("http://127.0.0.1:8000/library/api/active-borrows/")
+  fetch("/library/api/active-borrows/")
     .then(res => res.json())
     .then(data => {
       const recordSelect = document.getElementById("returnRecordSelect");
@@ -372,7 +372,7 @@ document.getElementById("cancelReturnBook").addEventListener("click", () => {
 document.getElementById("submitReturnBook").addEventListener("click", () => {
   const record_id = document.getElementById("returnRecordSelect").value;
 
-  fetch("http://127.0.0.1:8000/library/api/return-book/", {
+  fetch("/library/api/return-book/", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ record_id })
@@ -410,7 +410,7 @@ document.getElementById("submitAddMember").addEventListener("click", () => {
     return;
   }
 
-  fetch("http://127.0.0.1:8000/library/api/add-member/", {
+  fetch("/library/api/add-member/", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ name, email, phone, username, password })
@@ -443,7 +443,7 @@ if (notificationBell && notificationDropdown) {
     if (isOpening) {
       notificationList.innerHTML = `<li class="notif-empty">Loading...</li>`;
 
-      fetch("http://127.0.0.1:8000/library/api/due-books/")
+      fetch("/library/api/due-books/")
         .then(res => res.json())
         .then(data => {
           const overdueOnly = data.records.filter(r => r.status === "Overdue");
