@@ -1,4 +1,4 @@
-fetch("http://127.0.0.1:8000/library/api/due-books/")
+fetch("/library/api/due-books/")
   .then(res => res.json())
   .then(data => {
     const tbody = document.getElementById("dueBooksBody");
