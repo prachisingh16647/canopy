@@ -1,5 +1,5 @@
 /*==================== LOAD BOOKS + MEMBERS ====================*/
-fetch("http://127.0.0.1:8000/library/api/books-members/")
+fetch("/library/api/books-members/")
   .then(res => res.json())
   .then(data => {
     const bookSelect = document.getElementById("issueBookSelect");
@@ -31,7 +31,7 @@ document.getElementById("submitIssueBook").addEventListener("click", () => {
     return;
   }
 
-  fetch("http://127.0.0.1:8000/library/api/issue-book/", {
+  fetch("/library/api/issue-book/", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ book_id, member_id, due_date })
