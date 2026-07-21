@@ -1,5 +1,5 @@
 /*==================== LOAD ACTIVE BORROWS ====================*/
-fetch("http://127.0.0.1:8000/library/api/active-borrows/")
+fetch("/library/api/active-borrows/")
   .then(res => res.json())
   .then(data => {
     const recordSelect = document.getElementById("returnRecordSelect");
@@ -21,7 +21,7 @@ document.getElementById("submitReturnBook").addEventListener("click", () => {
     return;
   }
 
-  fetch("http://127.0.0.1:8000/library/api/return-book/", {
+  fetch("/library/api/return-book/", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ record_id })
