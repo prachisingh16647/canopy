@@ -1,4 +1,4 @@
-fetch("http://127.0.0.1:8000/library/api/all-members/")
+fetch("/library/api/all-members/")
   .then(res => res.json())
   .then(data => {
     const tbody = document.getElementById("allMembersBody");
@@ -51,7 +51,7 @@ document.getElementById("submitAddMember").addEventListener("click", () => {
     return;
   }
 
-  fetch("http://127.0.0.1:8000/library/api/add-member/", {
+  fetch("/library/api/add-member/", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ name, email, phone, username, password })
