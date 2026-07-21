@@ -1,4 +1,4 @@
-fetch("http://127.0.0.1:8000/library/api/reports/")
+fetch("/library/api/reports/")
   .then(res => res.json())
   .then(data => {
     document.getElementById("rTotalBooks").innerText = data.total_books;
