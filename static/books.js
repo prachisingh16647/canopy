@@ -1,4 +1,4 @@
-fetch("http://127.0.0.1:8000/library/api/all-books/")
+fetch("/library/api/all-books/")
   .then(res => res.json())
   .then(data => {
     const tbody = document.getElementById("allBooksBody");
@@ -55,7 +55,7 @@ document.getElementById("submitAddBook").addEventListener("click", () => {
     return;
   }
 
-  fetch("http://127.0.0.1:8000/library/api/add-book/", {
+  fetch("/library/api/add-book/", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ title, author, cover })
