@@ -1,10 +1,13 @@
-from django.urls import path
-from . import views
+from django.contrib import admin
+from django.urls import path, include
+from django.views.generic import RedirectView
+
+    # ================= Librarian Auth Routes =================
 
 urlpatterns = [
-    # ================= Librarian Auth Routes =================
-    path('login/', views.login_view, name='login'),
-    path('logout/', views.logout_view, name='logout'),
+    path('admin/', admin.site.urls),
+    path('', RedirectView.as_view(url='/library/', permanent=False)),
+    path('library/', include('library.urls'))
 
     # ================= Librarian HTML Template Routes =================
     path('', views.dashboard_page, name='dashboard'),              # Opens index.html
