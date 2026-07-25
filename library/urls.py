@@ -26,6 +26,9 @@ urlpatterns = [
     path('api/add-member/', views.add_member, name='add_member'),
     path('api/all-books/', views.all_books, name='all_books'),
     path('api/all-members/', views.all_members, name='all_members'),
+    path('api/delete-book/<int:book_id>/', views.delete_book, name='delete_book'),
+    path('api/delete-member/<int:member_id>/', views.delete_member, name='delete_member'),
+    path('api/edit-book/<int:book_id>/', views.edit_book, name='edit_book'),
     path('api/due-books/', views.due_books, name='due_books'),
     path('api/reports/', views.reports_data, name='reports_data'),
 
