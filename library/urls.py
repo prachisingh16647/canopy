@@ -7,7 +7,7 @@ from django.views.generic import RedirectView
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', RedirectView.as_view(url='/library/', permanent=False)),
-    path('library/', include('library.urls'))
+    path('library/', include('library.urls')),
 
     # ================= Librarian HTML Template Routes =================
     path('', views.dashboard_page, name='dashboard'),              # Opens index.html
