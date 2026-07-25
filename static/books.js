@@ -1,26 +1,39 @@
-fetch("/library/api/all-books/")
-  .then(res => res.json())
-  .then(data => {
-    const tbody = document.getElementById("allBooksBody");
-    tbody.innerHTML = "";
-    data.books.forEach(book => {
-      const statusClass = book.status === "Available" ? "available" : "borrowed";
-      const row = document.createElement("tr");
-      row.innerHTML = `
-        <td>
-          <div class="book">
-            <img src="${book.cover}">
-            <span>${book.title}</span>
-          </div>
-        </td>
-        <td>${book.author}</td>
-        <td><span class="${statusClass}">${book.status}</span></td>
-        <td><button class="edit" data-id="${book.id}" data-title="${book.title}" data-author="${book.author}" data-cover="${book.cover_url || ''}">Edit</button></td>
-      `;
-      tbody.appendChild(row);
-    });
-  })
-  .catch(error => console.error("Error loading books:", error));
+let allBooksData = []; // keeps the full book list in memory so Edit can look up by id safely
+
+function escapeHtml(str) {
+  const div = document.createElement("div");
+  div.textContent = str == null ? "" : str;
+  return div.innerHTML;
+}
+
+function loadBooks() {
+  fetch("/library/api/all-books/")
+    .then(res => res.json())
+    .then(data => {
+      allBooksData = data.books;
+      const tbody = document.getElementById("allBooksBody");
+      tbody.innerHTML = "";
+      data.books.forEach(book => {
+        const statusClass = book.status === "Available" ? "available" : "borrowed";
+        const row = document.createElement("tr");
+        row.innerHTML = `
+          <td>
+            <div class="book">
+              <img src="${escapeHtml(book.cover)}">
+              <span>${escapeHtml(book.title)}</span>
+            </div>
+          </td>
+          <td>${escapeHtml(book.author)}</td>
+          <td><span class="${statusClass}">${escapeHtml(book.status)}</span></td>
+          <td><button class="edit" data-id="${book.id}">Edit</button></td>
+        `;
+        tbody.appendChild(row);
+      });
+    })
+    .catch(error => console.error("Error loading books:", error));
+}
+
+loadBooks();
 
 /*==================== SEARCH ====================*/
 const search = document.getElementById("bookSearch");
@@ -54,13 +67,18 @@ function openModalForAdd() {
   addBookModal.classList.add("active");
 }
 
-function openModalForEdit(id, title, author, cover) {
+function openModalForEdit(id) {
+  const book = allBooksData.find(b => String(b.id) === String(id));
+  if (!book) {
+    alert("Could not find that book's details. Try refreshing the page.");
+    return;
+  }
   editingBookId = id;
   bookModalTitle.textContent = "Edit Book";
   submitBookBtn.textContent = "Save Changes";
-  titleInput.value = title;
-  authorInput.value = author;
-  coverInput.value = cover;
+  titleInput.value = book.title;
+  authorInput.value = book.author;
+  coverInput.value = book.cover_url || "";
   addBookModal.classList.add("active");
 }
 
@@ -68,8 +86,7 @@ openAddBookBtn.addEventListener("click", openModalForAdd);
 
 document.getElementById("allBooksBody").addEventListener("click", (e) => {
   if (!e.target.classList.contains("edit")) return;
-  const btn = e.target;
-  openModalForEdit(btn.dataset.id, btn.dataset.title, btn.dataset.author, btn.dataset.cover);
+  openModalForEdit(e.target.dataset.id);
 });
 
 document.getElementById("cancelAddBook").addEventListener("click", () => {
@@ -99,21 +116,10 @@ submitBookBtn.addEventListener("click", () => {
           return;
         }
         addBookModal.classList.remove("active");
-        location.reload();
+        loadBooks();
       })
       .catch(error => console.error("Error editing book:", error));
   } else {
     fetch("/library/api/add-book/", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ title, author, cover })
-    })
-      .then(response => response.json())
-      .then(data => {
-        alert("Book added successfully!");
-        addBookModal.classList.remove("active");
-        location.reload();
-      })
-      .catch(error => console.error("Error adding book:", error));
-  }
-});
+      headers: {
