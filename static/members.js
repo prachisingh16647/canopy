@@ -1,3 +1,9 @@
+function escapeHtml(str) {
+  const div = document.createElement("div");
+  div.textContent = str == null ? "" : str;
+  return div.innerHTML;
+}
+
 fetch("/library/api/all-members/")
   .then(res => res.json())
   .then(data => {
@@ -6,10 +12,10 @@ fetch("/library/api/all-members/")
     data.members.forEach(member => {
       const row = document.createElement("tr");
       row.innerHTML = `
-        <td>${member.name}</td>
-        <td>${member.email}</td>
-        <td>${member.phone}</td>
-        <td>${member.joined}</td>
+        <td>${escapeHtml(member.name)}</td>
+        <td>${escapeHtml(member.email)}</td>
+        <td>${escapeHtml(member.phone)}</td>
+        <td>${escapeHtml(member.joined)}</td>
       `;
       tbody.appendChild(row);
     });
