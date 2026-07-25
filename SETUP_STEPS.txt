@@ -34,9 +34,7 @@ IMPORTANT NOTES:
 
 HOW TO APPLY
 -------------
-Open each file in this zip, copy its full content, and paste it over the
-matching file in your GitHub repo (Edit -> select all -> paste -> Commit
-changes). Then on PythonAnywhere:
+on PythonAnywhere:
    cd ~/canopy
    git pull origin main
 ...then reload the web app from the Web tab.
