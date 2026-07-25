@@ -268,10 +268,12 @@ def all_books(request):
     books = Book.objects.all().order_by('-added_on')
     data = [
         {
+            "id": b.id,
             "title": b.title,
             "author": b.author,
             "status": "Available" if b.is_available else "Borrowed",
-            "cover": b.cover_image or "https://via.placeholder.com/60"
+            "cover": b.cover_image or "https://via.placeholder.com/60",
+            "cover_url": b.cover_image
         }
         for b in books
     ]
@@ -281,6 +283,7 @@ def all_members(request):
     members = Member.objects.all().order_by('-join_on')
     data = [
         {
+            "id": m.id,
             "name": m.name,
             "email": m.email,
             "phone": m.phone or "N/A",
@@ -289,6 +292,70 @@ def all_members(request):
         for m in members
     ]
     return JsonResponse({"members": data})
+
+
+@csrf_exempt
+def delete_book(request, book_id):
+    if request.method in ("POST", "DELETE"):
+        try:
+            book = Book.objects.get(id=book_id)
+        except Book.DoesNotExist:
+            return JsonResponse({"error": "Book not found."}, status=404)
+
+        if BorrowRecord.objects.filter(book=book, returned_on__isnull=True).exists():
+            return JsonResponse(
+                {"error": "This book is currently borrowed and can't be deleted."},
+                status=400
+            )
+
+        book.delete()
+        return JsonResponse({"success": True})
+    return JsonResponse({"error": "Invalid method"}, status=405)
+
+
+@csrf_exempt
+def edit_book(request, book_id):
+    if request.method == "POST":
+        try:
+            book = Book.objects.get(id=book_id)
+        except Book.DoesNotExist:
+            return JsonResponse({"error": "Book not found."}, status=404)
+
+        data = json.loads(request.body)
+        title = data.get("title", "").strip()
+        author = data.get("author", "").strip()
+
+        if not title or not author:
+            return JsonResponse({"error": "Title and author can't be empty."}, status=400)
+
+        book.title = title
+        book.author = author
+        book.cover_image = data.get("cover", "").strip()
+        book.save()
+        return JsonResponse({"success": True})
+    return JsonResponse({"error": "Invalid method"}, status=405)
+
+
+@csrf_exempt
+def delete_member(request, member_id):
+    if request.method in ("POST", "DELETE"):
+        try:
+            member = Member.objects.get(id=member_id)
+        except Member.DoesNotExist:
+            return JsonResponse({"error": "Member not found."}, status=404)
+
+        if BorrowRecord.objects.filter(member=member, returned_on__isnull=True).exists():
+            return JsonResponse(
+                {"error": "This member has borrowed books that haven't been returned yet."},
+                status=400
+            )
+
+        linked_user = member.user
+        member.delete()
+        if linked_user:
+            linked_user.delete()
+        return JsonResponse({"success": True})
+    return JsonResponse({"error": "Invalid method"}, status=405)
 
 def due_books(request):
     today = date.today()
