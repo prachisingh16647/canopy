@@ -118,9 +118,122 @@
 </form>
 </div>
 
+<!-- ================= Delete Records ================= -->
+<div class="table-box" style="max-width:500px;">
+<div class="title"><h3>Delete Records</h3></div>
+<p style="font-size:13px;color:#777;margin-bottom:16px;">Removing a book or member is permanent and can't be undone.</p>
+
+<label style="font-size:13px;color:#777;display:block;margin-bottom:6px;">Delete a book</label>
+<div style="display:flex;gap:10px;margin-bottom:18px;">
+  <select id="deleteBookSelect" style="flex:1;padding:14px;border:1px solid #ddd;border-radius:8px;font-size:15px;">
+    <option value="">Loading books...</option>
+  </select>
+  <button id="deleteBookBtn" style="background:#ef4444;color:#fff;border:none;border-radius:8px;padding:0 18px;cursor:pointer;">Delete</button>
+</div>
+
+<label style="font-size:13px;color:#777;display:block;margin-bottom:6px;">Delete a member</label>
+<div style="display:flex;gap:10px;">
+  <select id="deleteMemberSelect" style="flex:1;padding:14px;border:1px solid #ddd;border-radius:8px;font-size:15px;">
+    <option value="">Loading members...</option>
+  </select>
+  <button id="deleteMemberBtn" style="background:#ef4444;color:#fff;border:none;border-radius:8px;padding:0 18px;cursor:pointer;">Delete</button>
+</div>
+
+<p id="deleteStatusMsg" style="font-size:13px;margin-top:14px;"></p>
+</div>
+
 </main>
 
 </div>
+
+<script>
+function showDeleteStatus(text, ok) {
+  const el = document.getElementById("deleteStatusMsg");
+  el.textContent = text;
+  el.style.color = ok ? "#166534" : "#991b1b";
+}
+
+function loadBookOptions() {
+  fetch("/library/api/all-books/")
+    .then(res => res.json())
+    .then(data => {
+      const select = document.getElementById("deleteBookSelect");
+      select.innerHTML = '<option value="">Select a book...</option>';
+      data.books.forEach(book => {
+        const option = document.createElement("option");
+        option.value = book.id;
+        option.textContent = `${book.title} — ${book.author}`;
+        select.appendChild(option);
+      });
+    })
+    .catch(error => console.error("Error loading books:", error));
+}
+
+function loadMemberOptions() {
+  fetch("/library/api/all-members/")
+    .then(res => res.json())
+    .then(data => {
+      const select = document.getElementById("deleteMemberSelect");
+      select.innerHTML = '<option value="">Select a member...</option>';
+      data.members.forEach(member => {
+        const option = document.createElement("option");
+        option.value = member.id;
+        option.textContent = `${member.name} — ${member.email}`;
+        select.appendChild(option);
+      });
+    })
+    .catch(error => console.error("Error loading members:", error));
+}
+
+loadBookOptions();
+loadMemberOptions();
+
+document.getElementById("deleteBookBtn").addEventListener("click", () => {
+  const select = document.getElementById("deleteBookSelect");
+  const bookId = select.value;
+  if (!bookId) {
+    showDeleteStatus("Please select a book first.", false);
+    return;
+  }
+  const bookLabel = select.options[select.selectedIndex].textContent;
+  if (!confirm(`Delete "${bookLabel}"? This can't be undone.`)) return;
+
+  fetch(`/library/api/delete-book/${bookId}/`, { method: "POST" })
+    .then(res => res.json())
+    .then(data => {
+      if (data.error) {
+        showDeleteStatus(data.error, false);
+        return;
+      }
+      showDeleteStatus(`"${bookLabel}" was deleted.`, true);
+      loadBookOptions();
+    })
+    .catch(error => showDeleteStatus("Something went wrong deleting the book.", false));
+});
+
+document.getElementById("deleteMemberBtn").addEventListener("click", () => {
+  const select = document.getElementById("deleteMemberSelect");
+  const memberId = select.value;
+  if (!memberId) {
+    showDeleteStatus("Please select a member first.", false);
+    return;
+  }
+  const memberLabel = select.options[select.selectedIndex].textContent;
+  if (!confirm(`Delete "${memberLabel}"? This can't be undone.`)) return;
+
+  fetch(`/library/api/delete-member/${memberId}/`, { method: "POST" })
+    .then(res => res.json())
+    .then(data => {
+      if (data.error) {
+        showDeleteStatus(data.error, false);
+        return;
+      }
+      showDeleteStatus(`"${memberLabel}" was deleted.`, true);
+      loadMemberOptions();
+    })
+    .catch(error => showDeleteStatus("Something went wrong deleting the member.", false));
+});
+</script>
 
 </body>
 </html>
