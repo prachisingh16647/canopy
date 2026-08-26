@@ -16,11 +16,11 @@
   {% if error %}<p style="color:#ef4444;margin-bottom:14px;">{{ error }}</p>{% endif %}
   <form method="POST">
     {% csrf_token %}
-    <input type="text" name="name" placeholder="Full Name" required>
+    <input type="text" name="name" placeholder="Full Name" minlength="2" required>
     <input type="email" name="email" placeholder="Email" required>
-    <input type="text" name="phone" placeholder="Phone (optional)">
-    <input type="text" name="username" placeholder="Choose a username" required>
-    <input type="password" name="password" placeholder="Choose a password" required>
+    <input type="text" name="phone" placeholder="Phone (optional, 10 digits)" pattern="[0-9]{10}" title="Enter a 10-digit phone number">
+    <input type="text" name="username" placeholder="Choose a username" minlength="4" pattern="[A-Za-z0-9_.]{4,30}" title="4-30 characters: letters, numbers, . or _" required>
+    <input type="password" name="password" placeholder="Choose a password (min 8 characters)" minlength="8" required>
     <div class="modal-actions" style="justify-content:stretch;">
       <button id="submitAddBook" type="submit" style="width:100%;">Sign Up</button>
     </div>
