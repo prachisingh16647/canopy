@@ -963,70 +963,53 @@ background:#40916c;
 }
 
 /* =========================================================
-   ISSUE BOOK & RETURN BOOK DROPDOWNS
+   ISSUE BOOK & RETURN BOOK - LARGER SELECT BOXES
    ========================================================= */
 
-/* Issue Book */
-#bookSelect,
-#memberSelect,
-#issueBookForm select {
+#issueBookSelect,
+#issueMemberSelect,
+#returnRecordSelect {
     width: 100%;
-    min-width: 360px;
+    min-height: 52px;
     padding: 14px 16px;
-    font-size: 15px;
-    border: 1px solid #d1d5db;
-    border-radius: 10px;
-    background: #ffffff;
-    color: #374151;
+    margin-bottom: 14px;
+
+    border: 1px solid #ddd;
+    border-radius: 8px;
+
+    background: #fff;
+    color: #333;
+
+    font-family: inherit;
+    font-size: 16px;
+
     box-sizing: border-box;
+    cursor: pointer;
 }
 
-/* Return Book */
-#returnBookSelect,
-#returnBookForm select {
-    width: 100%;
-    min-width: 360px;
-    padding: 14px 16px;
+/* Keep the dropdown text easy to read */
+#issueBookSelect option,
+#issueMemberSelect option,
+#returnRecordSelect option {
     font-size: 15px;
-    border: 1px solid #d1d5db;
-    border-radius: 10px;
-    background: #ffffff;
-    color: #374151;
-    box-sizing: border-box;
-}
-
-
-/* Make the actual option text comfortable to read */
-#bookSelect option,
-#memberSelect option,
-#returnBookSelect option {
     padding: 10px;
-    font-size: 15px;
 }
 
-
-/* Dark mode */
-.dark #bookSelect,
-.dark #memberSelect,
-.dark #returnBookSelect,
-.dark #issueBookForm select,
-.dark #returnBookForm select {
-    background: #1e293b;
-    color: #f8fafc;
-    border-color: #475569;
+/* Focus effect */
+#issueBookSelect:focus,
+#issueMemberSelect:focus,
+#returnRecordSelect:focus {
+    outline: none;
+    border-color: #2d6a4f;
+    box-shadow: 0 0 0 3px rgba(45, 106, 79, 0.12);
 }
 
-
-/* Responsive screens */
+/* Mobile */
 @media (max-width: 600px) {
-
-    #bookSelect,
-    #memberSelect,
-    #returnBookSelect,
-    #issueBookForm select,
-    #returnBookForm select {
-        min-width: 0;
+    #issueBookSelect,
+    #issueMemberSelect,
+    #returnRecordSelect {
         width: 100%;
+        min-width: 0;
     }
-
 }
