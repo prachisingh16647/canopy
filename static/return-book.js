@@ -28,6 +28,10 @@ document.getElementById("submitReturnBook").addEventListener("click", () => {
   })
     .then(res => res.json())
     .then(data => {
+      if (data.error) {
+        alert(data.error);
+        return;
+      }
       msg.innerText = "Book returned successfully!";
       setTimeout(() => location.reload(), 900);
     })
