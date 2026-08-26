@@ -45,16 +45,38 @@ document.getElementById("cancelAddMember").addEventListener("click", () => {
   addMemberModal.classList.remove("active");
 });
 
+const EMAIL_RE = /^[a-zA-Z0-9][a-zA-Z0-9._%+-]*@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+const PHONE_RE = /^\d{10}$/;
+const USERNAME_RE = /^[a-zA-Z0-9_.]{4,30}$/;
+
 document.getElementById("submitAddMember").addEventListener("click", () => {
-  const name = document.getElementById("newMemberName").value;
-  const email = document.getElementById("newMemberEmail").value;
-  const phone = document.getElementById("newMemberPhone").value;
-  const username = document.getElementById("newMemberUsername").value;
+  const name = document.getElementById("newMemberName").value.trim();
+  const email = document.getElementById("newMemberEmail").value.trim();
+  const phone = document.getElementById("newMemberPhone").value.trim();
+  const username = document.getElementById("newMemberUsername").value.trim();
   const password = document.getElementById("newMemberPassword").value;
 
-  if (!name || !email) {
-    alert("Please fill in name and email.");
+  if (!name || name.length < 2) {
+    alert("Please enter a valid name.");
     return;
+  }
+  if (!EMAIL_RE.test(email)) {
+    alert("Please enter a valid email address.");
+    return;
+  }
+  if (phone && !PHONE_RE.test(phone)) {
+    alert("Phone number must be exactly 10 digits.");
+    return;
+  }
+  if (username || password) {
+    if (!USERNAME_RE.test(username)) {
+      alert("Username must be 4-30 characters (letters, numbers, '.', '_' only).");
+      return;
+    }
+    if (password.length < 8 || !/[A-Za-z]/.test(password) || !/\d/.test(password)) {
+      alert("Password must be at least 8 characters and include a letter and a number.");
+      return;
+    }
   }
 
   fetch("/library/api/add-member/", {
