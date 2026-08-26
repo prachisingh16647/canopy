@@ -962,9 +962,7 @@ background:#40916c;
   font-size:16px;
 }
 
-/* =========================================================
-   ISSUE BOOK & RETURN BOOK - LARGER SELECT BOXES
-   ========================================================= */
+
 
 #issueBookSelect,
 #issueMemberSelect,
@@ -1012,4 +1010,3 @@ background:#40916c;
         width: 100%;
         min-width: 0;
     }
-}
