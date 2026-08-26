@@ -16,10 +16,15 @@ fetch("/library/api/books-members/")
   .catch(error => console.error("Error loading books/members:", error));
 
 /*==================== SUBMIT ====================*/
+const dueDateInput = document.getElementById("issueDueDate");
+const tomorrow = new Date();
+tomorrow.setDate(tomorrow.getDate() + 1);
+dueDateInput.min = tomorrow.toISOString().split("T")[0];
+
 document.getElementById("submitIssueBook").addEventListener("click", () => {
   const book_id = document.getElementById("issueBookSelect").value;
   const member_id = document.getElementById("issueMemberSelect").value;
-  const due_date = document.getElementById("issueDueDate").value;
+  const due_date = dueDateInput.value;
   const msg = document.getElementById("issueMsg");
 
   if (!book_id) {
@@ -30,6 +35,10 @@ document.getElementById("submitIssueBook").addEventListener("click", () => {
     alert("Please select a due date.");
     return;
   }
+  if (due_date <= new Date().toISOString().split("T")[0]) {
+    alert("Due date must be after today.");
+    return;
+  }
 
   fetch("/library/api/issue-book/", {
     method: "POST",
@@ -38,6 +47,10 @@ document.getElementById("submitIssueBook").addEventListener("click", () => {
   })
     .then(res => res.json())
     .then(data => {
+      if (data.error) {
+        alert(data.error);
+        return;
+      }
       msg.innerText = "Book issued successfully!";
       setTimeout(() => location.reload(), 900);
     })
