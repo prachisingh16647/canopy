@@ -283,9 +283,9 @@ document.getElementById("cancelAddBook").addEventListener("click", () => {
 });
 
 document.getElementById("submitAddBook").addEventListener("click", () => {
-  const title = document.getElementById("newBookTitle").value;
-  const author = document.getElementById("newBookAuthor").value;
-  const cover = document.getElementById("newBookCover").value;
+  const title = document.getElementById("newBookTitle").value.trim();
+  const author = document.getElementById("newBookAuthor").value.trim();
+  const cover = document.getElementById("newBookCover").value.trim();
 
   if (!title || !author) {
     alert("Please fill in title and author.");
@@ -299,6 +299,10 @@ document.getElementById("submitAddBook").addEventListener("click", () => {
   })
     .then(response => response.json())
     .then(data => {
+      if (data.error) {
+        alert(data.error);
+        return;
+      }
       alert("Book added successfully!");
       addBookModal.classList.remove("active");
       location.reload();
@@ -333,8 +337,16 @@ document.getElementById("submitIssueBook").addEventListener("click", () => {
   const member_id = document.getElementById("issueMemberSelect").value;
   const due_date = document.getElementById("issueDueDate").value;
 
+  if (!book_id) {
+    alert("No book available to issue.");
+    return;
+  }
   if (!due_date) {
     alert("Please select a due date.");
+    return;
+  }
+  if (due_date <= new Date().toISOString().split("T")[0]) {
+    alert("Due date must be after today.");
     return;
   }
 
@@ -345,6 +357,10 @@ document.getElementById("submitIssueBook").addEventListener("click", () => {
   })
     .then(res => res.json())
     .then(data => {
+      if (data.error) {
+        alert(data.error);
+        return;
+      }
       alert("Book issued successfully!");
       issueBookModal.classList.remove("active");
       location.reload();
@@ -372,6 +388,11 @@ document.getElementById("cancelReturnBook").addEventListener("click", () => {
 document.getElementById("submitReturnBook").addEventListener("click", () => {
   const record_id = document.getElementById("returnRecordSelect").value;
 
+  if (!record_id) {
+    alert("No borrow record selected.");
+    return;
+  }
+
   fetch("/library/api/return-book/", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -379,6 +400,10 @@ document.getElementById("submitReturnBook").addEventListener("click", () => {
   })
     .then(res => res.json())
     .then(data => {
+      if (data.error) {
+        alert(data.error);
+        return;
+      }
       alert("Book returned successfully!");
       returnBookModal.classList.remove("active");
       location.reload();
@@ -398,16 +423,38 @@ document.getElementById("cancelAddMember").addEventListener("click", () => {
   addMemberModal.classList.remove("active");
 });
 
+const MEMBER_EMAIL_RE = /^[a-zA-Z0-9][a-zA-Z0-9._%+-]*@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+const MEMBER_PHONE_RE = /^\d{10}$/;
+const MEMBER_USERNAME_RE = /^[a-zA-Z0-9_.]{4,30}$/;
+
 document.getElementById("submitAddMember").addEventListener("click", () => {
-  const name = document.getElementById("newMemberName").value;
-  const email = document.getElementById("newMemberEmail").value;
-  const phone = document.getElementById("newMemberPhone").value;
-  const username = document.getElementById("newMemberUsername").value;
+  const name = document.getElementById("newMemberName").value.trim();
+  const email = document.getElementById("newMemberEmail").value.trim();
+  const phone = document.getElementById("newMemberPhone").value.trim();
+  const username = document.getElementById("newMemberUsername").value.trim();
   const password = document.getElementById("newMemberPassword").value;
 
-  if (!name || !email) {
-    alert("Please fill in name and email.");
+  if (!name || name.length < 2) {
+    alert("Please enter a valid name.");
     return;
+  }
+  if (!MEMBER_EMAIL_RE.test(email)) {
+    alert("Please enter a valid email address.");
+    return;
+  }
+  if (phone && !MEMBER_PHONE_RE.test(phone)) {
+    alert("Phone number must be exactly 10 digits.");
+    return;
+  }
+  if (username || password) {
+    if (!MEMBER_USERNAME_RE.test(username)) {
+      alert("Username must be 4-30 characters (letters, numbers, '.', '_' only).");
+      return;
+    }
+    if (password.length < 8 || !/[A-Za-z]/.test(password) || !/\d/.test(password)) {
+      alert("Password must be at least 8 characters and include a letter and a number.");
+      return;
+    }
   }
 
   fetch("/library/api/add-member/", {

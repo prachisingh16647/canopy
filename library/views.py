@@ -16,6 +16,7 @@ from django.views.decorators.csrf import csrf_exempt
 from datetime import date
 import calendar
 from functools import wraps
+from .validators import validate_member_fields, validate_profile_fields, USERNAME_RE
 
 
 def librarian_required(view_func):
@@ -84,12 +85,18 @@ def settings_page(request):
         if form_type == "profile_info":
             new_username = request.POST.get("username", "").strip()
             if new_username:
-                request.user.username = new_username
-                request.user.save()
-            if request.FILES.get("profile_picture"):
-                profile.profile_picture = request.FILES["profile_picture"]
-                profile.save()
-            message = "Profile updated successfully!"
+                if not USERNAME_RE.match(new_username):
+                    error = "Username must be 4-30 characters (letters, numbers, '.', '_' only)."
+                elif User.objects.filter(username=new_username).exclude(id=request.user.id).exists():
+                    error = "That username is already taken."
+                else:
+                    request.user.username = new_username
+                    request.user.save()
+            if not error:
+                if request.FILES.get("profile_picture"):
+                    profile.profile_picture = request.FILES["profile_picture"]
+                    profile.save()
+                message = "Profile updated successfully!"
 
         elif form_type == "change_password":
             password_form = PasswordChangeForm(user=request.user, data=request.POST)
@@ -112,11 +119,23 @@ def settings_page(request):
 @csrf_exempt
 def add_book(request):
     if request.method == "POST":
-        data = json.loads(request.body)
+        try:
+            data = json.loads(request.body)
+        except (json.JSONDecodeError, TypeError):
+            return JsonResponse({"error": "Invalid request data."}, status=400)
+
+        title = (data.get("title") or "").strip()
+        author = (data.get("author") or "").strip()
+
+        if not title:
+            return JsonResponse({"error": "Title is required."}, status=400)
+        if not author:
+            return JsonResponse({"error": "Author is required."}, status=400)
+
         Book.objects.create(
-            title=data.get("title"),
-            author=data.get("author"),
-            cover_image=data.get("cover", "")
+            title=title,
+            author=author,
+            cover_image=(data.get("cover") or "").strip()
         )
         return JsonResponse({"success": True})
     return JsonResponse({"error": "Invalid method"}, status=405)
@@ -206,14 +225,37 @@ def get_books_and_members(request):
 @csrf_exempt
 def issue_book(request):
     if request.method == "POST":
-        data = json.loads(request.body)
-        book = Book.objects.get(id=data.get("book_id"))
-        member = Member.objects.get(id=data.get("member_id"))
-        BorrowRecord.objects.create(
-            book=book,
-            member=member,
-            due_date=data.get("due_date")
-        )
+        try:
+            data = json.loads(request.body)
+        except (json.JSONDecodeError, TypeError):
+            return JsonResponse({"error": "Invalid request data."}, status=400)
+
+        try:
+            book = Book.objects.get(id=data.get("book_id"))
+        except (Book.DoesNotExist, ValueError, TypeError):
+            return JsonResponse({"error": "Selected book not found."}, status=404)
+
+        try:
+            member = Member.objects.get(id=data.get("member_id"))
+        except (Member.DoesNotExist, ValueError, TypeError):
+            return JsonResponse({"error": "Selected member not found."}, status=404)
+
+        if not book.is_available:
+            return JsonResponse({"error": "This book is already borrowed and unavailable."}, status=400)
+
+        due_date_str = data.get("due_date")
+        if not due_date_str:
+            return JsonResponse({"error": "Due date is required."}, status=400)
+
+        try:
+            due_date = date.fromisoformat(due_date_str)
+        except (ValueError, TypeError):
+            return JsonResponse({"error": "Invalid due date format."}, status=400)
+
+        if due_date <= date.today():
+            return JsonResponse({"error": "Due date must be after today."}, status=400)
+
+        BorrowRecord.objects.create(book=book, member=member, due_date=due_date)
         book.is_available = False
         book.save()
         return JsonResponse({"success": True})
@@ -231,8 +273,19 @@ def get_active_borrows(request):
 @csrf_exempt
 def return_book(request):
     if request.method == "POST":
-        data = json.loads(request.body)
-        record = BorrowRecord.objects.get(id=data.get("record_id"))
+        try:
+            data = json.loads(request.body)
+        except (json.JSONDecodeError, TypeError):
+            return JsonResponse({"error": "Invalid request data."}, status=400)
+
+        try:
+            record = BorrowRecord.objects.get(id=data.get("record_id"))
+        except (BorrowRecord.DoesNotExist, ValueError, TypeError):
+            return JsonResponse({"error": "Borrow record not found."}, status=404)
+
+        if record.returned_on is not None:
+            return JsonResponse({"error": "This book has already been returned."}, status=400)
+
         record.returned_on = timezone.now().date()
         record.save()
 
@@ -245,9 +298,23 @@ def return_book(request):
 @csrf_exempt
 def add_member(request):
     if request.method == "POST":
-        data = json.loads(request.body)
-        username = data.get("username", "").strip()
-        password = data.get("password", "").strip()
+        try:
+            data = json.loads(request.body)
+        except (json.JSONDecodeError, TypeError):
+            return JsonResponse({"error": "Invalid request data."}, status=400)
+
+        name = (data.get("name") or "").strip()
+        email = (data.get("email") or "").strip()
+        phone = (data.get("phone") or "").strip()
+        username = (data.get("username") or "").strip()
+        password = (data.get("password") or "").strip()
+
+        error = validate_member_fields(name, email, phone, username, password)
+        if error:
+            return JsonResponse({"error": error}, status=400)
+
+        if Member.objects.filter(email=email).exists():
+            return JsonResponse({"error": "A member with that email already exists."}, status=400)
 
         linked_user = None
         if username and password:
@@ -255,12 +322,7 @@ def add_member(request):
                 return JsonResponse({"error": "That username is already taken."}, status=400)
             linked_user = User.objects.create_user(username=username, password=password)
 
-        Member.objects.create(
-            user=linked_user,
-            name=data.get("name"),
-            email=data.get("email"),
-            phone=data.get("phone", "")
-        )
+        Member.objects.create(user=linked_user, name=name, email=email, phone=phone)
         return JsonResponse({"success": True})
     return JsonResponse({"error": "Invalid method"}, status=405)
 
@@ -438,8 +500,9 @@ def member_signup_view(request):
         username = request.POST.get("username", "").strip()
         password = request.POST.get("password", "").strip()
 
-        if not (name and email and username and password):
-            return render(request, 'member_signup.html', {"error": "Please fill in all required fields."})
+        error = validate_member_fields(name, email, phone, username, password, require_login=True)
+        if error:
+            return render(request, 'member_signup.html', {"error": error})
 
         if User.objects.filter(username=username).exists():
             return render(request, 'member_signup.html', {"error": "That username is already taken."})
@@ -501,11 +564,14 @@ def member_settings_view(request):
         if form_type == "profile_info":
             new_name = request.POST.get("name", "").strip()
             new_phone = request.POST.get("phone", "").strip()
-            if new_name:
+            field_error = validate_profile_fields(new_name, new_phone)
+            if field_error:
+                error = field_error
+            else:
                 member.name = new_name
-            member.phone = new_phone
-            member.save()
-            message = "Profile updated successfully!"
+                member.phone = new_phone
+                member.save()
+                message = "Profile updated successfully!"
 
         elif form_type == "change_password":
             password_form = PasswordChangeForm(user=request.user, data=request.POST)
