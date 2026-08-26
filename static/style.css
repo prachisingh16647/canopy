@@ -961,3 +961,72 @@ background:#40916c;
   border-radius:8px;
   font-size:16px;
 }
+
+/* =========================================================
+   ISSUE BOOK & RETURN BOOK DROPDOWNS
+   ========================================================= */
+
+/* Issue Book */
+#bookSelect,
+#memberSelect,
+#issueBookForm select {
+    width: 100%;
+    min-width: 360px;
+    padding: 14px 16px;
+    font-size: 15px;
+    border: 1px solid #d1d5db;
+    border-radius: 10px;
+    background: #ffffff;
+    color: #374151;
+    box-sizing: border-box;
+}
+
+/* Return Book */
+#returnBookSelect,
+#returnBookForm select {
+    width: 100%;
+    min-width: 360px;
+    padding: 14px 16px;
+    font-size: 15px;
+    border: 1px solid #d1d5db;
+    border-radius: 10px;
+    background: #ffffff;
+    color: #374151;
+    box-sizing: border-box;
+}
+
+
+/* Make the actual option text comfortable to read */
+#bookSelect option,
+#memberSelect option,
+#returnBookSelect option {
+    padding: 10px;
+    font-size: 15px;
+}
+
+
+/* Dark mode */
+.dark #bookSelect,
+.dark #memberSelect,
+.dark #returnBookSelect,
+.dark #issueBookForm select,
+.dark #returnBookForm select {
+    background: #1e293b;
+    color: #f8fafc;
+    border-color: #475569;
+}
+
+
+/* Responsive screens */
+@media (max-width: 600px) {
+
+    #bookSelect,
+    #memberSelect,
+    #returnBookSelect,
+    #issueBookForm select,
+    #returnBookForm select {
+        min-width: 0;
+        width: 100%;
+    }
+
+}
