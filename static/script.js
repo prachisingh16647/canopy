@@ -1,23 +1,17 @@
 /*==================== DARK MODE ====================*/
-
 const themeBtn = document.getElementById("themeBtn");
-
 themeBtn.addEventListener("click", () => {
-
     document.body.classList.toggle("dark");
-
     if(document.body.classList.contains("dark")){
         themeBtn.innerHTML = '<i class="fa-solid fa-sun"></i>';
     }
     else{
         themeBtn.innerHTML = '<i class="fa-solid fa-moon"></i>';
     }
-
 });
 
 /*==================== FETCH REAL DATA ====================*/
-
-fetch("/library/api/dashboard/")
+fetch("http://127.0.0.1:8000/library/api/dashboard/")
   .then(response => response.json())
   .then(data => {
     document.getElementById("totalBooks").setAttribute("data-target", data.total_books);
@@ -40,7 +34,7 @@ fetch("/library/api/dashboard/")
         </td>
         <td>${book.author}</td>
         <td><span class="${statusClass}">${book.status}</span></td>
-        <td><button class="edit">Edit</button></td>
+        <td><button class="edit" data-id="${book.id}">Edit</button></td>
       `;
       tbody.appendChild(row);
     });
@@ -60,270 +54,199 @@ fetch("/library/api/dashboard/")
   })
   .catch(error => console.error("Error fetching dashboard data:", error));
 
-
 /*==================== COUNTER ====================*/
 function startCounters(){
-
-const counters = document.querySelectorAll(".counter");
-
-counters.forEach(counter=>{
-
-    counter.innerText="0";
-
-    const updateCounter=()=>{
-
-        const target=+counter.getAttribute("data-target");
-
-        const count=+counter.innerText;
-
-        const increment=target/120;
-
-        if(count<target){
-
-            counter.innerText=Math.ceil(count+increment);
-
-            setTimeout(updateCounter,15);
-
-        }
-
-        else{
-
-            counter.innerText=target.toLocaleString();
-
-        }
-
-    }
-
-    updateCounter();
-
-});
-
+  const counters = document.querySelectorAll(".counter");
+  counters.forEach(counter=>{
+      counter.innerText="0";
+      const updateCounter=()=>{
+          const target=+counter.getAttribute("data-target");
+          const count=+counter.innerText;
+          const increment=target/120;
+          if(count<target){
+              counter.innerText=Math.ceil(count+increment);
+              setTimeout(updateCounter,15);
+          }
+          else{
+              counter.innerText=target.toLocaleString();
+          }
+      }
+      updateCounter();
+  });
 }
+
 /*==================== SEARCH ====================*/
-
 const search=document.querySelector(".search-box input");
-
 search.addEventListener("keyup",()=>{
-
     const value=search.value.toLowerCase();
-
     const rows=document.querySelectorAll("tbody tr");
-
     rows.forEach(row=>{
-
         const text=row.innerText.toLowerCase();
-
         row.style.display=text.includes(value) ? "" : "none";
-
     });
-
 });
-
 
 /*==================== CHART ====================*/
-
 function renderBorrowChart(labels, counts){
-
-const ctx = document.getElementById("borrowChart");
-
-if(!ctx) return;
-
-new Chart(ctx,{
-
-type:"line",
-
-data:{
-
-labels: labels || [],
-
-datasets:[{
-
-label:"Borrowed Books",
-
-data: counts || [],
-
-fill:true,
-
-borderColor:"#2d6a4f",
-
-backgroundColor:"rgba(45,106,79,.15)",
-
-borderWidth:4,
-
-tension:.4,
-
-pointRadius:5,
-
-pointBackgroundColor:"#2d6a4f"
-
-}]
-
-},
-
-options:{
-
-responsive:true,
-maintainAspectRatio:false,
-
-plugins:{
-
-legend:{
-display:false
-}
-
-},
-
-scales:{
-
-y:{
-
-beginAtZero:true,
-
-grid:{
-color:"#e5e7eb"
-}
-
-},
-
-x:{
-
-grid:{
-display:false
-}
-
-}
-
-}
-
-}
-
-});
-
+  const ctx = document.getElementById("borrowChart");
+  if(!ctx) return;
+  new Chart(ctx,{
+    type:"line",
+    data:{
+      labels: labels || [],
+      datasets:[{
+        label:"Borrowed Books",
+        data: counts || [],
+        fill:true,
+        borderColor:"#2d6a4f",
+        backgroundColor:"rgba(45,106,79,.15)",
+        borderWidth:4,
+        tension:.4,
+        pointRadius:5,
+        pointBackgroundColor:"#2d6a4f"
+      }]
+    },
+    options:{
+      responsive:true,
+      maintainAspectRatio:false,
+      plugins:{
+        legend:{
+          display:false
+        }
+      },
+      scales:{
+        y:{
+          beginAtZero:true,
+          grid:{
+            color:"#e5e7eb"
+          }
+        },
+        x:{
+          grid:{
+            display:false
+          }
+        }
+      }
+    }
+  });
 }
 
 /*==================== RECENT ACTIVITY ====================*/
-
 function renderRecentActivity(activities){
-
-const list = document.getElementById("recentActivityList");
-
-if(!list) return;
-
-list.innerHTML = "";
-
-if(!activities || activities.length === 0){
-
-list.innerHTML = `<li>No recent activity yet</li>`;
-
-return;
-
+  const list = document.getElementById("recentActivityList");
+  if(!list) return;
+  list.innerHTML = "";
+  if(!activities || activities.length === 0){
+    list.innerHTML = `<li>No recent activity yet</li>`;
+    return;
+  }
+  activities.forEach(text => {
+    const li = document.createElement("li");
+    li.innerHTML = `<i class="fa-solid fa-circle"></i> ${text}`;
+    list.appendChild(li);
+  });
 }
-
-activities.forEach(text => {
-
-const li = document.createElement("li");
-
-li.innerHTML = `<i class="fa-solid fa-circle"></i> ${text}`;
-
-list.appendChild(li);
-
-});
-
-}
-
 
 /*==================== CARD ANIMATION ====================*/
-
 const cards=document.querySelectorAll(".card");
-
 cards.forEach(card=>{
-
-card.addEventListener("mouseenter",()=>{
-
-card.style.transform="translateY(-10px) scale(1.02)";
-
+  card.addEventListener("mouseenter",()=>{
+    card.style.transform="translateY(-10px) scale(1.02)";
+  });
+  card.addEventListener("mouseleave",()=>{
+    card.style.transform="translateY(0) scale(1)";
+  });
 });
-
-card.addEventListener("mouseleave",()=>{
-
-card.style.transform="translateY(0) scale(1)";
-
-});
-
-});
-
 
 /*==================== ACTIVE MENU ====================*/
-
 const menu=document.querySelectorAll(".menu li");
-
 menu.forEach(item=>{
-
-item.addEventListener("click",()=>{
-
-menu.forEach(i=>i.classList.remove("active"));
-
-item.classList.add("active");
-
+  item.addEventListener("click",()=>{
+    menu.forEach(i=>i.classList.remove("active"));
+    item.classList.add("active");
+  });
 });
 
-});
-
-/*==================== ADD BOOK MODAL ====================*/
-
+/*==================== ADD / EDIT BOOK MODAL ====================*/
 const addBookModal = document.getElementById("addBookModal");
 const quickActionButtons = document.querySelectorAll(".quick-actions button");
 
+let editingBookId = null; // tracks whether the modal is in "add" or "edit" mode
+
+function resetAddBookModal() {
+  editingBookId = null;
+  addBookModal.querySelector("h3").innerText = "Add New Book";
+  document.getElementById("submitAddBook").innerText = "Add Book";
+  document.getElementById("newBookTitle").value = "";
+  document.getElementById("newBookAuthor").value = "";
+  document.getElementById("newBookCover").value = "";
+}
+
 quickActionButtons[0].addEventListener("click", () => {
+  resetAddBookModal();
   addBookModal.classList.add("active");
 });
 
 document.getElementById("cancelAddBook").addEventListener("click", () => {
   addBookModal.classList.remove("active");
+  resetAddBookModal();
 });
 
 document.getElementById("submitAddBook").addEventListener("click", () => {
-  const title = document.getElementById("newBookTitle").value.trim();
-  const author = document.getElementById("newBookAuthor").value.trim();
-  const cover = document.getElementById("newBookCover").value.trim();
+  const title = document.getElementById("newBookTitle").value;
+  const author = document.getElementById("newBookAuthor").value;
+  const cover = document.getElementById("newBookCover").value;
 
   if (!title || !author) {
     alert("Please fill in title and author.");
     return;
   }
 
-  fetch("/library/api/add-book/", {
+  const url = editingBookId
+    ? `http://127.0.0.1:8000/library/api/edit-book/${editingBookId}/`
+    : "http://127.0.0.1:8000/library/api/add-book/";
+
+  fetch(url, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ title, author, cover })
   })
     .then(response => response.json())
     .then(data => {
-      if (data.error) {
-        alert(data.error);
-        return;
-      }
-      alert("Book added successfully!");
+      alert(editingBookId ? "Book updated successfully!" : "Book added successfully!");
       addBookModal.classList.remove("active");
+      resetAddBookModal();
       location.reload();
     })
-    .catch(error => console.error("Error adding book:", error));
+    .catch(error => console.error("Error saving book:", error));
+});
+
+// Edit button clicks (delegated, since rows are added dynamically)
+document.getElementById("recentBooksBody").addEventListener("click", (e) => {
+  if (!e.target.classList.contains("edit")) return;
+
+  editingBookId = e.target.dataset.id;
+  const row = e.target.closest("tr");
+
+  document.getElementById("newBookTitle").value = row.querySelector(".book span").innerText;
+  document.getElementById("newBookAuthor").value = row.children[1].innerText;
+  document.getElementById("newBookCover").value = "";
+
+  addBookModal.querySelector("h3").innerText = "Edit Book";
+  document.getElementById("submitAddBook").innerText = "Save Changes";
+  addBookModal.classList.add("active");
 });
 
 /*==================== ISSUE BOOK MODAL ====================*/
-
 const issueBookModal = document.getElementById("issueBookModal");
-
 quickActionButtons[1].addEventListener("click", () => {
-  fetch("/library/api/books-members/")
+  fetch("http://127.0.0.1:8000/library/api/books-members/")
     .then(res => res.json())
     .then(data => {
       const bookSelect = document.getElementById("issueBookSelect");
       const memberSelect = document.getElementById("issueMemberSelect");
-
       bookSelect.innerHTML = data.books.map(b => `<option value="${b.id}">${b.title}</option>`).join("");
       memberSelect.innerHTML = data.members.map(m => `<option value="${m.id}">${m.name}</option>`).join("");
-
       issueBookModal.classList.add("active");
     });
 });
@@ -337,42 +260,29 @@ document.getElementById("submitIssueBook").addEventListener("click", () => {
   const member_id = document.getElementById("issueMemberSelect").value;
   const due_date = document.getElementById("issueDueDate").value;
 
-  if (!book_id) {
-    alert("No book available to issue.");
-    return;
-  }
   if (!due_date) {
     alert("Please select a due date.");
     return;
   }
-  if (due_date <= new Date().toISOString().split("T")[0]) {
-    alert("Due date must be after today.");
-    return;
-  }
 
-  fetch("/library/api/issue-book/", {
+  fetch("http://127.0.0.1:8000/library/api/issue-book/", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ book_id, member_id, due_date })
   })
     .then(res => res.json())
     .then(data => {
-      if (data.error) {
-        alert(data.error);
-        return;
-      }
       alert("Book issued successfully!");
       issueBookModal.classList.remove("active");
       location.reload();
     })
     .catch(error => console.error("Error issuing book:", error));
 });
+
 /*==================== RETURN BOOK MODAL ====================*/
-
 const returnBookModal = document.getElementById("returnBookModal");
-
 quickActionButtons[2].addEventListener("click", () => {
-  fetch("/library/api/active-borrows/")
+  fetch("http://127.0.0.1:8000/library/api/active-borrows/")
     .then(res => res.json())
     .then(data => {
       const recordSelect = document.getElementById("returnRecordSelect");
@@ -388,22 +298,13 @@ document.getElementById("cancelReturnBook").addEventListener("click", () => {
 document.getElementById("submitReturnBook").addEventListener("click", () => {
   const record_id = document.getElementById("returnRecordSelect").value;
 
-  if (!record_id) {
-    alert("No borrow record selected.");
-    return;
-  }
-
-  fetch("/library/api/return-book/", {
+  fetch("http://127.0.0.1:8000/library/api/return-book/", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ record_id })
   })
     .then(res => res.json())
     .then(data => {
-      if (data.error) {
-        alert(data.error);
-        return;
-      }
       alert("Book returned successfully!");
       returnBookModal.classList.remove("active");
       location.reload();
@@ -412,9 +313,7 @@ document.getElementById("submitReturnBook").addEventListener("click", () => {
 });
 
 /*==================== ADD MEMBER MODAL ====================*/
-
 const addMemberModal = document.getElementById("addMemberModal");
-
 quickActionButtons[3].addEventListener("click", () => {
   addMemberModal.classList.add("active");
 });
@@ -423,41 +322,19 @@ document.getElementById("cancelAddMember").addEventListener("click", () => {
   addMemberModal.classList.remove("active");
 });
 
-const MEMBER_EMAIL_RE = /^[a-zA-Z0-9][a-zA-Z0-9._%+-]*@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-const MEMBER_PHONE_RE = /^\d{10}$/;
-const MEMBER_USERNAME_RE = /^[a-zA-Z0-9_.]{4,30}$/;
-
 document.getElementById("submitAddMember").addEventListener("click", () => {
-  const name = document.getElementById("newMemberName").value.trim();
-  const email = document.getElementById("newMemberEmail").value.trim();
-  const phone = document.getElementById("newMemberPhone").value.trim();
-  const username = document.getElementById("newMemberUsername").value.trim();
+  const name = document.getElementById("newMemberName").value;
+  const email = document.getElementById("newMemberEmail").value;
+  const phone = document.getElementById("newMemberPhone").value;
+  const username = document.getElementById("newMemberUsername").value;
   const password = document.getElementById("newMemberPassword").value;
 
-  if (!name || name.length < 2) {
-    alert("Please enter a valid name.");
+  if (!name || !email) {
+    alert("Please fill in name and email.");
     return;
-  }
-  if (!MEMBER_EMAIL_RE.test(email)) {
-    alert("Please enter a valid email address.");
-    return;
-  }
-  if (phone && !MEMBER_PHONE_RE.test(phone)) {
-    alert("Phone number must be exactly 10 digits.");
-    return;
-  }
-  if (username || password) {
-    if (!MEMBER_USERNAME_RE.test(username)) {
-      alert("Username must be 4-30 characters (letters, numbers, '.', '_' only).");
-      return;
-    }
-    if (password.length < 8 || !/[A-Za-z]/.test(password) || !/\d/.test(password)) {
-      alert("Password must be at least 8 characters and include a letter and a number.");
-      return;
-    }
   }
 
-  fetch("/library/api/add-member/", {
+  fetch("http://127.0.0.1:8000/library/api/add-member/", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ name, email, phone, username, password })
@@ -474,14 +351,13 @@ document.getElementById("submitAddMember").addEventListener("click", () => {
     })
     .catch(error => console.error("Error adding member:", error));
 });
-/*==================== NOTIFICATION BELL ====================*/
 
+/*==================== NOTIFICATION BELL ====================*/
 const notificationBell = document.getElementById("notificationBell");
 const notificationDropdown = document.getElementById("notificationDropdown");
 const notificationList = document.getElementById("notificationList");
 
 if (notificationBell && notificationDropdown) {
-
   notificationBell.addEventListener("click", (e) => {
     e.stopPropagation();
     const isOpening = !notificationDropdown.classList.contains("active");
@@ -489,17 +365,14 @@ if (notificationBell && notificationDropdown) {
 
     if (isOpening) {
       notificationList.innerHTML = `<li class="notif-empty">Loading...</li>`;
-
-      fetch("/library/api/due-books/")
+      fetch("http://127.0.0.1:8000/library/api/due-books/")
         .then(res => res.json())
         .then(data => {
           const overdueOnly = data.records.filter(r => r.status === "Overdue");
-
           if (overdueOnly.length === 0) {
             notificationList.innerHTML = `<li class="notif-empty">No overdue books 🎉</li>`;
             return;
           }
-
           notificationList.innerHTML = overdueOnly.map(r => `
             <li>
               <span class="notif-title">${r.book}</span>
