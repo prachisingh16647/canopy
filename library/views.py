@@ -145,6 +145,30 @@ def edit_book(request, book_id):
     return JsonResponse({"error": "Invalid method"}, status=405)
 
 
+@csrf_exempt
+def delete_book(request, book_id):
+    if request.method == "POST":
+        try:
+            book = Book.objects.get(id=book_id)
+        except Book.DoesNotExist:
+            return JsonResponse({"error": "Book not found"}, status=404)
+        book.delete()
+        return JsonResponse({"success": True})
+    return JsonResponse({"error": "Invalid method"}, status=405)
+
+
+@csrf_exempt
+def delete_member(request, member_id):
+    if request.method == "POST":
+        try:
+            member = Member.objects.get(id=member_id)
+        except Member.DoesNotExist:
+            return JsonResponse({"error": "Member not found"}, status=404)
+        member.delete()
+        return JsonResponse({"success": True})
+    return JsonResponse({"error": "Invalid method"}, status=405)
+
+
 def _get_monthly_borrow_stats():
     """Returns last 6 months of borrow counts, oldest to newest."""
     today = date.today()
