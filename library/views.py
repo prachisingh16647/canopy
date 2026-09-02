@@ -1,5 +1,4 @@
 from django.shortcuts import render
-
 # Create your views here.
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.models import User
@@ -10,13 +9,11 @@ from django.shortcuts import redirect
 from django.http import JsonResponse
 from .models import Book, Member, BorrowRecord, Profile
 from django.utils import timezone
-
 import json
 from django.views.decorators.csrf import csrf_exempt
 from datetime import date
 import calendar
 from functools import wraps
-from .validators import validate_member_fields, validate_profile_fields, USERNAME_RE
 
 
 def librarian_required(view_func):
@@ -48,29 +45,36 @@ def dashboard_page(request):
     profile, _created = Profile.objects.get_or_create(user=request.user)
     return render(request, 'index.html', {"profile": profile})
 
+
 @librarian_required
 def books_page(request):
     return render(request, 'books.html')
+
 
 @librarian_required
 def members_page(request):
     return render(request, 'members.html')
 
+
 @librarian_required
 def issue_page(request):
     return render(request, 'issue-book.html')
+
 
 @librarian_required
 def return_page(request):
     return render(request, 'return-book.html')
 
+
 @librarian_required
 def due_page(request):
     return render(request, 'due-books.html')
 
+
 @librarian_required
 def reports_page(request):
     return render(request, 'reports.html')
+
 
 @librarian_required
 def settings_page(request):
@@ -85,18 +89,13 @@ def settings_page(request):
         if form_type == "profile_info":
             new_username = request.POST.get("username", "").strip()
             if new_username:
-                if not USERNAME_RE.match(new_username):
-                    error = "Username must be 4-30 characters (letters, numbers, '.', '_' only)."
-                elif User.objects.filter(username=new_username).exclude(id=request.user.id).exists():
-                    error = "That username is already taken."
-                else:
-                    request.user.username = new_username
-                    request.user.save()
-            if not error:
-                if request.FILES.get("profile_picture"):
-                    profile.profile_picture = request.FILES["profile_picture"]
-                    profile.save()
-                message = "Profile updated successfully!"
+                request.user.username = new_username
+                request.user.save()
+
+            if request.FILES.get("profile_picture"):
+                profile.profile_picture = request.FILES["profile_picture"]
+            profile.save()
+            message = "Profile updated successfully!"
 
         elif form_type == "change_password":
             password_form = PasswordChangeForm(user=request.user, data=request.POST)
@@ -119,26 +118,32 @@ def settings_page(request):
 @csrf_exempt
 def add_book(request):
     if request.method == "POST":
-        try:
-            data = json.loads(request.body)
-        except (json.JSONDecodeError, TypeError):
-            return JsonResponse({"error": "Invalid request data."}, status=400)
-
-        title = (data.get("title") or "").strip()
-        author = (data.get("author") or "").strip()
-
-        if not title:
-            return JsonResponse({"error": "Title is required."}, status=400)
-        if not author:
-            return JsonResponse({"error": "Author is required."}, status=400)
-
+        data = json.loads(request.body)
         Book.objects.create(
-            title=title,
-            author=author,
-            cover_image=(data.get("cover") or "").strip()
+            title=data.get("title"),
+            author=data.get("author"),
+            cover_image=data.get("cover", "")
         )
         return JsonResponse({"success": True})
     return JsonResponse({"error": "Invalid method"}, status=405)
+
+
+@csrf_exempt
+def edit_book(request, book_id):
+    if request.method == "POST":
+        data = json.loads(request.body)
+        try:
+            book = Book.objects.get(id=book_id)
+        except Book.DoesNotExist:
+            return JsonResponse({"error": "Book not found"}, status=404)
+
+        book.title = data.get("title", book.title)
+        book.author = data.get("author", book.author)
+        book.cover_image = data.get("cover", book.cover_image)
+        book.save()
+        return JsonResponse({"success": True})
+    return JsonResponse({"error": "Invalid method"}, status=405)
+
 
 def _get_monthly_borrow_stats():
     """Returns last 6 months of borrow counts, oldest to newest."""
@@ -166,16 +171,12 @@ def _get_monthly_borrow_stats():
 def _get_recent_activity():
     """Combines recent issues, returns, new books, and new members into one feed."""
     events = []
-
     for r in BorrowRecord.objects.select_related('book', 'member').order_by('-borrowed_on')[:8]:
         events.append({"text": f"{r.member.name} borrowed \"{r.book.title}\"", "date": r.borrowed_on})
-
     for r in BorrowRecord.objects.filter(returned_on__isnull=False).select_related('book', 'member').order_by('-returned_on')[:8]:
         events.append({"text": f"{r.member.name} returned \"{r.book.title}\"", "date": r.returned_on})
-
     for b in Book.objects.order_by('-added_on')[:5]:
         events.append({"text": f"\"{b.title}\" added to catalog", "date": b.added_on})
-
     for m in Member.objects.order_by('-join_on')[:5]:
         events.append({"text": f"{m.name} registered as a new member", "date": m.join_on})
 
@@ -195,6 +196,7 @@ def dashboard_data(request):
     recent_books = []
     for book in Book.objects.order_by('-added_on')[:4]:
         recent_books.append({
+            "id": book.id,
             "title": book.title,
             "author": book.author,
             "status": "Available" if book.is_available else "Borrowed",
@@ -216,6 +218,7 @@ def dashboard_data(request):
     }
     return JsonResponse(data)
 
+
 def get_books_and_members(request):
     books = list(Book.objects.filter(is_available=True).values("id", "title"))
     members = list(Member.objects.values("id", "name"))
@@ -225,41 +228,19 @@ def get_books_and_members(request):
 @csrf_exempt
 def issue_book(request):
     if request.method == "POST":
-        try:
-            data = json.loads(request.body)
-        except (json.JSONDecodeError, TypeError):
-            return JsonResponse({"error": "Invalid request data."}, status=400)
-
-        try:
-            book = Book.objects.get(id=data.get("book_id"))
-        except (Book.DoesNotExist, ValueError, TypeError):
-            return JsonResponse({"error": "Selected book not found."}, status=404)
-
-        try:
-            member = Member.objects.get(id=data.get("member_id"))
-        except (Member.DoesNotExist, ValueError, TypeError):
-            return JsonResponse({"error": "Selected member not found."}, status=404)
-
-        if not book.is_available:
-            return JsonResponse({"error": "This book is already borrowed and unavailable."}, status=400)
-
-        due_date_str = data.get("due_date")
-        if not due_date_str:
-            return JsonResponse({"error": "Due date is required."}, status=400)
-
-        try:
-            due_date = date.fromisoformat(due_date_str)
-        except (ValueError, TypeError):
-            return JsonResponse({"error": "Invalid due date format."}, status=400)
-
-        if due_date <= date.today():
-            return JsonResponse({"error": "Due date must be after today."}, status=400)
-
-        BorrowRecord.objects.create(book=book, member=member, due_date=due_date)
+        data = json.loads(request.body)
+        book = Book.objects.get(id=data.get("book_id"))
+        member = Member.objects.get(id=data.get("member_id"))
+        BorrowRecord.objects.create(
+            book=book,
+            member=member,
+            due_date=data.get("due_date")
+        )
         book.is_available = False
         book.save()
         return JsonResponse({"success": True})
     return JsonResponse({"error": "Invalid method"}, status=405)
+
 
 def get_active_borrows(request):
     records = BorrowRecord.objects.filter(returned_on__isnull=True)
@@ -273,48 +254,22 @@ def get_active_borrows(request):
 @csrf_exempt
 def return_book(request):
     if request.method == "POST":
-        try:
-            data = json.loads(request.body)
-        except (json.JSONDecodeError, TypeError):
-            return JsonResponse({"error": "Invalid request data."}, status=400)
-
-        try:
-            record = BorrowRecord.objects.get(id=data.get("record_id"))
-        except (BorrowRecord.DoesNotExist, ValueError, TypeError):
-            return JsonResponse({"error": "Borrow record not found."}, status=404)
-
-        if record.returned_on is not None:
-            return JsonResponse({"error": "This book has already been returned."}, status=400)
-
+        data = json.loads(request.body)
+        record = BorrowRecord.objects.get(id=data.get("record_id"))
         record.returned_on = timezone.now().date()
         record.save()
-
         record.book.is_available = True
         record.book.save()
-
         return JsonResponse({"success": True})
     return JsonResponse({"error": "Invalid method"}, status=405)
+
 
 @csrf_exempt
 def add_member(request):
     if request.method == "POST":
-        try:
-            data = json.loads(request.body)
-        except (json.JSONDecodeError, TypeError):
-            return JsonResponse({"error": "Invalid request data."}, status=400)
-
-        name = (data.get("name") or "").strip()
-        email = (data.get("email") or "").strip()
-        phone = (data.get("phone") or "").strip()
-        username = (data.get("username") or "").strip()
-        password = (data.get("password") or "").strip()
-
-        error = validate_member_fields(name, email, phone, username, password)
-        if error:
-            return JsonResponse({"error": error}, status=400)
-
-        if Member.objects.filter(email=email).exists():
-            return JsonResponse({"error": "A member with that email already exists."}, status=400)
+        data = json.loads(request.body)
+        username = data.get("username", "").strip()
+        password = data.get("password", "").strip()
 
         linked_user = None
         if username and password:
@@ -322,30 +277,34 @@ def add_member(request):
                 return JsonResponse({"error": "That username is already taken."}, status=400)
             linked_user = User.objects.create_user(username=username, password=password)
 
-        Member.objects.create(user=linked_user, name=name, email=email, phone=phone)
+        Member.objects.create(
+            user=linked_user,
+            name=data.get("name"),
+            email=data.get("email"),
+            phone=data.get("phone", "")
+        )
         return JsonResponse({"success": True})
     return JsonResponse({"error": "Invalid method"}, status=405)
+
 
 def all_books(request):
     books = Book.objects.all().order_by('-added_on')
     data = [
         {
-            "id": b.id,
             "title": b.title,
             "author": b.author,
             "status": "Available" if b.is_available else "Borrowed",
-            "cover": b.cover_image or "https://via.placeholder.com/60",
-            "cover_url": b.cover_image
+            "cover": b.cover_image or "https://via.placeholder.com/60"
         }
         for b in books
     ]
     return JsonResponse({"books": data})
 
+
 def all_members(request):
     members = Member.objects.all().order_by('-join_on')
     data = [
         {
-            "id": m.id,
             "name": m.name,
             "email": m.email,
             "phone": m.phone or "N/A",
@@ -355,69 +314,6 @@ def all_members(request):
     ]
     return JsonResponse({"members": data})
 
-
-@csrf_exempt
-def delete_book(request, book_id):
-    if request.method in ("POST", "DELETE"):
-        try:
-            book = Book.objects.get(id=book_id)
-        except Book.DoesNotExist:
-            return JsonResponse({"error": "Book not found."}, status=404)
-
-        if BorrowRecord.objects.filter(book=book, returned_on__isnull=True).exists():
-            return JsonResponse(
-                {"error": "This book is currently borrowed and can't be deleted."},
-                status=400
-            )
-
-        book.delete()
-        return JsonResponse({"success": True})
-    return JsonResponse({"error": "Invalid method"}, status=405)
-
-
-@csrf_exempt
-def edit_book(request, book_id):
-    if request.method == "POST":
-        try:
-            book = Book.objects.get(id=book_id)
-        except Book.DoesNotExist:
-            return JsonResponse({"error": "Book not found."}, status=404)
-
-        data = json.loads(request.body)
-        title = data.get("title", "").strip()
-        author = data.get("author", "").strip()
-
-        if not title or not author:
-            return JsonResponse({"error": "Title and author can't be empty."}, status=400)
-
-        book.title = title
-        book.author = author
-        book.cover_image = data.get("cover", "").strip()
-        book.save()
-        return JsonResponse({"success": True})
-    return JsonResponse({"error": "Invalid method"}, status=405)
-
-
-@csrf_exempt
-def delete_member(request, member_id):
-    if request.method in ("POST", "DELETE"):
-        try:
-            member = Member.objects.get(id=member_id)
-        except Member.DoesNotExist:
-            return JsonResponse({"error": "Member not found."}, status=404)
-
-        if BorrowRecord.objects.filter(member=member, returned_on__isnull=True).exists():
-            return JsonResponse(
-                {"error": "This member has borrowed books that haven't been returned yet."},
-                status=400
-            )
-
-        linked_user = member.user
-        member.delete()
-        if linked_user:
-            linked_user.delete()
-        return JsonResponse({"success": True})
-    return JsonResponse({"error": "Invalid method"}, status=405)
 
 def due_books(request):
     today = date.today()
@@ -444,7 +340,6 @@ def reports_data(request):
     total_borrowed = BorrowRecord.objects.filter(returned_on__isnull=True).count()
     total_returned = BorrowRecord.objects.filter(returned_on__isnull=False).count()
     overdue = BorrowRecord.objects.filter(returned_on__isnull=True, due_date__lt=today).count()
-
     return JsonResponse({
         "total_books": total_books,
         "total_members": total_members,
@@ -452,6 +347,7 @@ def reports_data(request):
         "total_returned": total_returned,
         "overdue": overdue,
     })
+
 
 def login_view(request):
     if request.method == "POST":
@@ -466,6 +362,7 @@ def login_view(request):
         else:
             return render(request, 'login.html', {"error": "Invalid username or password"})
     return render(request, 'login.html')
+
 
 def logout_view(request):
     logout(request)
@@ -488,9 +385,11 @@ def member_login_view(request):
             return render(request, 'member_login.html', {"error": "Invalid username or password"})
     return render(request, 'member_login.html')
 
+
 def member_logout_view(request):
     logout(request)
     return redirect('member_login')
+
 
 def member_signup_view(request):
     if request.method == "POST":
@@ -500,9 +399,8 @@ def member_signup_view(request):
         username = request.POST.get("username", "").strip()
         password = request.POST.get("password", "").strip()
 
-        error = validate_member_fields(name, email, phone, username, password, require_login=True)
-        if error:
-            return render(request, 'member_signup.html', {"error": error})
+        if not (name and email and username and password):
+            return render(request, 'member_signup.html', {"error": "Please fill in all required fields."})
 
         if User.objects.filter(username=username).exists():
             return render(request, 'member_signup.html', {"error": "That username is already taken."})
@@ -512,11 +410,11 @@ def member_signup_view(request):
 
         user = User.objects.create_user(username=username, password=password, email=email)
         Member.objects.create(user=user, name=name, email=email, phone=phone)
-
         login(request, user)
         return redirect('member_dashboard')
 
     return render(request, 'member_signup.html')
+
 
 @member_required
 def member_dashboard_view(request):
@@ -551,6 +449,7 @@ def member_dashboard_view(request):
         "history": history,
     })
 
+
 @member_required
 def member_settings_view(request):
     member = request.user.member_profile
@@ -564,14 +463,11 @@ def member_settings_view(request):
         if form_type == "profile_info":
             new_name = request.POST.get("name", "").strip()
             new_phone = request.POST.get("phone", "").strip()
-            field_error = validate_profile_fields(new_name, new_phone)
-            if field_error:
-                error = field_error
-            else:
+            if new_name:
                 member.name = new_name
                 member.phone = new_phone
                 member.save()
-                message = "Profile updated successfully!"
+            message = "Profile updated successfully!"
 
         elif form_type == "change_password":
             password_form = PasswordChangeForm(user=request.user, data=request.POST)
