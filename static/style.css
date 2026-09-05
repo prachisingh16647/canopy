@@ -1010,3 +1010,26 @@ background:#40916c;
         width: 100%;
         min-width: 0;
     }
+
+
+.edit-due-btn {
+    border: none;
+    border-radius: 8px;
+    padding: 8px 12px;
+    background: #52b788;
+    color: white;
+    font-family: 'Poppins', sans-serif;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: 0.25s;
+}
+
+.edit-due-btn:hover {
+    background: #40916c;
+    transform: translateY(-1px);
+}
+
+.edit-due-btn i {
+    margin-right: 5px;
+}
