@@ -11,26 +11,21 @@ fetch("/library/api/reports/")
     console.log("REPORT DATA:", data);
 
     document.getElementById("rTotalBooks").textContent =
-      data.total_books ?? 0;
+      data.total_books;
 
     document.getElementById("rTotalMembers").textContent =
-      data.total_members ?? 0;
+      data.total_members;
 
     document.getElementById("rBorrowed").textContent =
-      data.currently_borrowed ?? 0;
+      data.active_borrowed;
 
     document.getElementById("rOverdue").textContent =
-      data.overdue ?? 0;
+      data.overdue_books;
 
     document.getElementById("rReturned").textContent =
-      data.total_returned ?? 0;
+      data.returned_books;
+
   })
   .catch(error => {
     console.error("Error loading reports:", error);
-
-    document.getElementById("rTotalBooks").textContent = "0";
-    document.getElementById("rTotalMembers").textContent = "0";
-    document.getElementById("rBorrowed").textContent = "0";
-    document.getElementById("rOverdue").textContent = "0";
-    document.getElementById("rReturned").textContent = "0";
   });
