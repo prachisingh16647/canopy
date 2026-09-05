@@ -1,3 +1,4 @@
+```python
 from django.shortcuts import render, redirect
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.models import User
@@ -13,27 +14,35 @@ import calendar
 from functools import wraps
 
 
+# ==================== ACCESS CONTROL ====================
+
 def librarian_required(view_func):
-    """Only allows staff/superuser accounts in — regular members get sent to their own portal."""
+    """Only allows staff/superuser accounts."""
     @wraps(view_func)
     def wrapper(request, *args, **kwargs):
         if not request.user.is_authenticated:
             return redirect('login')
+
         if not (request.user.is_staff or request.user.is_superuser):
             return redirect('member_dashboard')
+
         return view_func(request, *args, **kwargs)
+
     return wrapper
 
 
 def member_required(view_func):
-    """Only allows accounts linked to a Member — librarians get sent to the admin dashboard."""
+    """Only allows accounts linked to a Member."""
     @wraps(view_func)
     def wrapper(request, *args, **kwargs):
         if not request.user.is_authenticated:
             return redirect('member_login')
+
         if not hasattr(request.user, 'member_profile'):
             return redirect('dashboard')
+
         return view_func(request, *args, **kwargs)
+
     return wrapper
 
 
@@ -41,8 +50,15 @@ def member_required(view_func):
 
 @librarian_required
 def dashboard_page(request):
-    profile, _created = Profile.objects.get_or_create(user=request.user)
-    return render(request, 'index.html', {"profile": profile})
+    profile, _created = Profile.objects.get_or_create(
+        user=request.user
+    )
+
+    return render(
+        request,
+        'index.html',
+        {"profile": profile}
+    )
 
 
 @librarian_required
@@ -77,56 +93,85 @@ def reports_page(request):
 
 @librarian_required
 def settings_page(request):
-    profile, _created = Profile.objects.get_or_create(user=request.user)
-    password_form = PasswordChangeForm(user=request.user)
+    profile, _created = Profile.objects.get_or_create(
+        user=request.user
+    )
+
+    password_form = PasswordChangeForm(
+        user=request.user
+    )
+
     message = None
     error = None
 
     if request.method == "POST":
+
         form_type = request.POST.get("form_type")
 
         if form_type == "profile_info":
-            new_username = request.POST.get("username", "").strip()
+
+            new_username = request.POST.get(
+                "username",
+                ""
+            ).strip()
 
             if new_username:
                 request.user.username = new_username
                 request.user.save()
 
             if request.FILES.get("profile_picture"):
-                profile.profile_picture = request.FILES["profile_picture"]
+                profile.profile_picture = request.FILES[
+                    "profile_picture"
+                ]
 
             profile.save()
+
             message = "Profile updated successfully!"
 
         elif form_type == "change_password":
+
             password_form = PasswordChangeForm(
                 user=request.user,
                 data=request.POST
             )
 
             if password_form.is_valid():
+
                 user = password_form.save()
-                update_session_auth_hash(request, user)
+
+                update_session_auth_hash(
+                    request,
+                    user
+                )
 
                 message = "Password changed successfully!"
-                password_form = PasswordChangeForm(user=request.user)
+
+                password_form = PasswordChangeForm(
+                    user=request.user
+                )
 
             else:
                 error = "Please fix the errors below."
 
-    return render(request, 'settings.html', {
-        "profile": profile,
-        "password_form": password_form,
-        "message": message,
-        "error": error,
-    })
+    return render(
+        request,
+        'settings.html',
+        {
+            "profile": profile,
+            "password_form": password_form,
+            "message": message,
+            "error": error,
+        }
+    )
 
 
 # ==================== BOOK API ====================
 
 @csrf_exempt
 def add_book(request):
+
     if request.method == "POST":
+
         data = json.loads(request.body)
 
         Book.objects.create(
@@ -135,7 +180,9 @@ def add_book(request):
             cover_image=data.get("cover", "")
         )
 
-        return JsonResponse({"success": True})
+        return JsonResponse({
+            "success": True
+        })
 
     return JsonResponse(
         {"error": "Invalid method"},
@@ -145,20 +192,33 @@ def add_book(request):
 
 @csrf_exempt
 def edit_book(request, book_id):
+
     if request.method == "POST":
+
         data = json.loads(request.body)
 
         try:
-            book = Book.objects.get(id=book_id)
+            book = Book.objects.get(
+                id=book_id
+            )
 
         except Book.DoesNotExist:
+
             return JsonResponse(
                 {"error": "Book not found"},
                 status=404
             )
 
-        book.title = data.get("title", book.title)
-        book.author = data.get("author", book.author)
+        book.title = data.get(
+            "title",
+            book.title
+        )
+
+        book.author = data.get(
+            "author",
+            book.author
+        )
+
         book.cover_image = data.get(
             "cover",
             book.cover_image
@@ -166,7 +226,9 @@ def edit_book(request, book_id):
 
         book.save()
 
-        return JsonResponse({"success": True})
+        return JsonResponse({
+            "success": True
+        })
 
     return JsonResponse(
         {"error": "Invalid method"},
@@ -176,11 +238,16 @@ def edit_book(request, book_id):
 
 @csrf_exempt
 def delete_book(request, book_id):
+
     if request.method == "POST":
+
         try:
-            book = Book.objects.get(id=book_id)
+            book = Book.objects.get(
+                id=book_id
+            )
 
         except Book.DoesNotExist:
+
             return JsonResponse(
                 {"error": "Book not found"},
                 status=404
@@ -188,7 +255,9 @@ def delete_book(request, book_id):
 
         book.delete()
 
-        return JsonResponse({"success": True})
+        return JsonResponse({
+            "success": True
+        })
 
     return JsonResponse(
         {"error": "Invalid method"},
@@ -197,15 +266,25 @@ def delete_book(request, book_id):
 
 
 def all_books(request):
-    books = Book.objects.all().order_by('-added_on')
+
+    books = Book.objects.all().order_by(
+        '-added_on'
+    )
 
     data = [
         {
             "id": b.id,
             "title": b.title,
             "author": b.author,
-            "status": "Available" if b.is_available else "Borrowed",
-            "cover": b.cover_image or "https://via.placeholder.com/60"
+            "status":
+                "Available"
+                if b.is_available
+                else
+                "Borrowed",
+            "cover":
+                b.cover_image
+                or
+                "https://via.placeholder.com/60"
         }
         for b in books
     ]
@@ -219,7 +298,9 @@ def all_books(request):
 
 @csrf_exempt
 def add_member(request):
+
     if request.method == "POST":
+
         data = json.loads(request.body)
 
         username = data.get(
@@ -242,7 +323,8 @@ def add_member(request):
 
                 return JsonResponse(
                     {
-                        "error": "That username is already taken."
+                        "error":
+                            "That username is already taken."
                     },
                     status=400
                 )
@@ -271,11 +353,16 @@ def add_member(request):
 
 @csrf_exempt
 def delete_member(request, member_id):
+
     if request.method == "POST":
+
         try:
-            member = Member.objects.get(id=member_id)
+            member = Member.objects.get(
+                id=member_id
+            )
 
         except Member.DoesNotExist:
+
             return JsonResponse(
                 {"error": "Member not found"},
                 status=404
@@ -294,15 +381,24 @@ def delete_member(request, member_id):
 
 
 def all_members(request):
-    members = Member.objects.all().order_by('-join_on')
+
+    members = Member.objects.all().order_by(
+        '-join_on'
+    )
 
     data = [
         {
             "id": m.id,
             "name": m.name,
             "email": m.email,
-            "phone": m.phone or "N/A",
-            "joined": m.join_on.strftime("%b %d, %Y")
+            "phone":
+                m.phone
+                or
+                "N/A",
+            "joined":
+                m.join_on.strftime(
+                    "%b %d, %Y"
+                )
         }
         for m in members
     ]
@@ -319,11 +415,17 @@ def get_books_and_members(request):
     books = list(
         Book.objects
         .filter(is_available=True)
-        .values("id", "title")
+        .values(
+            "id",
+            "title"
+        )
     )
 
     members = list(
-        Member.objects.values("id", "name")
+        Member.objects.values(
+            "id",
+            "name"
+        )
     )
 
     return JsonResponse({
@@ -379,7 +481,8 @@ def get_active_borrows(request):
     data = [
         {
             "id": r.id,
-            "label": f"{r.book.title} -> {r.member.name}"
+            "label":
+                f"{r.book.title} -> {r.member.name}"
         }
         for r in records
     ]
@@ -426,8 +529,13 @@ def due_books(request):
 
     records = (
         BorrowRecord.objects
-        .filter(returned_on__isnull=True)
-        .select_related("book", "member")
+        .filter(
+            returned_on__isnull=True
+        )
+        .select_related(
+            "book",
+            "member"
+        )
     )
 
     data = []
@@ -445,18 +553,26 @@ def due_books(request):
 
         data.append({
             "id": r.id,
-            "book": r.book.title,
-            "member": r.member.name,
-            "due_date": r.due_date.strftime(
-                "%b %d, %Y"
-            ),
-            "status": (
+
+            "book":
+                r.book.title,
+
+            "member":
+                r.member.name,
+
+            "due_date":
+                r.due_date.strftime(
+                    "%b %d, %Y"
+                ),
+
+            "status":
                 "Overdue"
                 if overdue
                 else
-                "Due Soon"
-            ),
-            "days": days
+                "Due Soon",
+
+            "days":
+                days
         })
 
     return JsonResponse({
@@ -478,28 +594,31 @@ def edit_due_date(request, record_id):
 
     try:
 
-        data = json.loads(request.body)
+        data = json.loads(
+            request.body
+        )
 
-        new_due_date = data.get("due_date")
+        new_due_date = data.get(
+            "due_date"
+        )
 
         if not new_due_date:
 
             return JsonResponse(
                 {
-                    "error": "Due date is required."
+                    "error":
+                        "Due date is required."
                 },
                 status=400
             )
-
 
         record = BorrowRecord.objects.get(
             id=record_id,
             returned_on__isnull=True
         )
 
-
-        # Convert JavaScript string
-        # YYYY-MM-DD into Python date
+        # JavaScript sends YYYY-MM-DD as a string.
+        # Convert it into a Python date object.
 
         try:
 
@@ -513,35 +632,32 @@ def edit_due_date(request, record_id):
             return JsonResponse(
                 {
                     "error":
-                    "Invalid date format. Use YYYY-MM-DD."
+                        "Invalid date format. "
+                        "Use YYYY-MM-DD."
                 },
                 status=400
             )
 
-
         record.due_date = new_due_date
-
         record.save()
-
 
         return JsonResponse({
             "success": True,
-            "due_date": record.due_date.strftime(
-                "%b %d, %Y"
-            )
+            "due_date":
+                record.due_date.strftime(
+                    "%b %d, %Y"
+                )
         })
-
 
     except BorrowRecord.DoesNotExist:
 
         return JsonResponse(
             {
                 "error":
-                "Active borrow record not found."
+                    "Active borrow record not found."
             },
             status=404
         )
-
 
     except Exception as e:
 
@@ -553,11 +669,57 @@ def edit_due_date(request, record_id):
         )
 
 
+# ==================== REPORTS API ====================
+
+def reports_data(request):
+
+    today = date.today()
+
+    total_books = Book.objects.count()
+
+    total_members = Member.objects.count()
+
+    total_borrowed = BorrowRecord.objects.count()
+
+    active_borrowed = BorrowRecord.objects.filter(
+        returned_on__isnull=True
+    ).count()
+
+    returned_books = BorrowRecord.objects.filter(
+        returned_on__isnull=False
+    ).count()
+
+    overdue_books = BorrowRecord.objects.filter(
+        returned_on__isnull=True,
+        due_date__lt=today
+    ).count()
+
+    return JsonResponse({
+        "total_books":
+            total_books,
+
+        "total_members":
+            total_members,
+
+        "total_borrowed":
+            total_borrowed,
+
+        "active_borrowed":
+            active_borrowed,
+
+        "returned_books":
+            returned_books,
+
+        "overdue_books":
+            overdue_books,
+    })
+
+
 # ==================== DASHBOARD ====================
 
 def _get_monthly_borrow_stats():
 
-    """Returns last 6 months of borrow counts, oldest to newest."""
+    """Returns last 6 months of borrow counts."""
 
     today = date.today()
 
@@ -582,7 +744,6 @@ def _get_monthly_borrow_stats():
             (y, m)
         )
 
-
     for y, m in month_pairs:
 
         count = BorrowRecord.objects.filter(
@@ -594,73 +755,91 @@ def _get_monthly_borrow_stats():
             calendar.month_abbr[m]
         )
 
-        counts.append(count)
-
+        counts.append(
+            count
+        )
 
     return labels, counts
 
 
 def _get_recent_activity():
 
-    """Combines recent issues, returns, new books, and new members into one feed."""
+    """Combines recent library activity."""
 
     events = []
 
-
     for r in (
         BorrowRecord.objects
-        .select_related("book", "member")
-        .order_by("-borrowed_on")[:8]
+        .select_related(
+            "book",
+            "member"
+        )
+        .order_by(
+            "-borrowed_on"
+        )[:8]
     ):
 
         events.append({
             "text":
-                f'{r.member.name} borrowed "{r.book.title}"',
+                f'{r.member.name} borrowed '
+                f'"{r.book.title}"',
+
             "date":
                 r.borrowed_on
         })
 
-
     for r in (
         BorrowRecord.objects
-        .filter(returned_on__isnull=False)
-        .select_related("book", "member")
-        .order_by("-returned_on")[:8]
+        .filter(
+            returned_on__isnull=False
+        )
+        .select_related(
+            "book",
+            "member"
+        )
+        .order_by(
+            "-returned_on"
+        )[:8]
     ):
 
         events.append({
             "text":
-                f'{r.member.name} returned "{r.book.title}"',
+                f'{r.member.name} returned '
+                f'"{r.book.title}"',
+
             "date":
                 r.returned_on
         })
 
-
     for b in (
         Book.objects
-        .order_by("-added_on")[:5]
+        .order_by(
+            "-added_on"
+        )[:5]
     ):
 
         events.append({
             "text":
                 f'"{b.title}" added to catalog',
+
             "date":
                 b.added_on
         })
 
-
     for m in (
         Member.objects
-        .order_by("-join_on")[:5]
+        .order_by(
+            "-join_on"
+        )[:5]
     ):
 
         events.append({
             "text":
                 f"{m.name} registered as a new member",
+
             "date":
                 m.join_on
         })
-
 
     events.sort(
         key=lambda e: e["date"],
@@ -683,7 +862,9 @@ def dashboard_data(request):
 
     borrowed_count = (
         BorrowRecord.objects
-        .filter(returned_on__isnull=True)
+        .filter(
+            returned_on__isnull=True
+        )
         .count()
     )
 
@@ -696,29 +877,36 @@ def dashboard_data(request):
         .count()
     )
 
-
     recent_books = []
 
     for book in (
         Book.objects
-        .order_by("-added_on")[:4]
+        .order_by(
+            "-added_on"
+        )[:4]
     ):
 
         recent_books.append({
-            "id": book.id,
-            "title": book.title,
-            "author": book.author,
+            "id":
+                book.id,
+
+            "title":
+                book.title,
+
+            "author":
+                book.author,
+
             "status":
                 "Available"
                 if book.is_available
                 else
                 "Borrowed",
+
             "cover":
                 book.cover_image
                 or
                 "https://via.placeholder.com/60"
         })
-
 
     monthly_labels, monthly_counts = (
         _get_monthly_borrow_stats()
@@ -727,7 +915,6 @@ def dashboard_data(request):
     recent_activity = (
         _get_recent_activity()
     )
-
 
     data = {
         "total_books":
@@ -754,7 +941,6 @@ def dashboard_data(request):
         "recent_activity":
             recent_activity,
     }
-
 
     return JsonResponse(data)
 
@@ -792,27 +978,28 @@ def login_view(request):
                     "login.html",
                     {
                         "error":
-                        "This is the librarian login. "
-                        "Members should use the member login page."
+                            "This is the librarian login. "
+                            "Members should use the member login page."
                     }
                 )
 
-            login(request, user)
+            login(
+                request,
+                user
+            )
 
             return redirect(
                 "dashboard"
             )
 
-        else:
-
-            return render(
-                request,
-                "login.html",
-                {
-                    "error":
+        return render(
+            request,
+            "login.html",
+            {
+                "error":
                     "Invalid username or password"
-                }
-            )
+            }
+        )
 
     return render(
         request,
@@ -861,7 +1048,7 @@ def member_login_view(request):
                     "member_login.html",
                     {
                         "error":
-                        "This account isn't registered as a member."
+                            "This account isn't registered as a member."
                     }
                 )
 
@@ -874,16 +1061,14 @@ def member_login_view(request):
                 "member_dashboard"
             )
 
-        else:
-
-            return render(
-                request,
-                "member_login.html",
-                {
-                    "error":
+        return render(
+            request,
+            "member_login.html",
+            {
+                "error":
                     "Invalid username or password"
-                }
-            )
+            }
+        )
 
     return render(
         request,
@@ -929,12 +1114,14 @@ def member_signup_view(request):
             ""
         ).strip()
 
-
         if not (
             name
-            and email
-            and username
-            and password
+            and
+            email
+            and
+            username
+            and
+            password
         ):
 
             return render(
@@ -942,10 +1129,9 @@ def member_signup_view(request):
                 "member_signup.html",
                 {
                     "error":
-                    "Please fill in all required fields."
+                        "Please fill in all required fields."
                 }
             )
-
 
         if User.objects.filter(
             username=username
@@ -956,10 +1142,9 @@ def member_signup_view(request):
                 "member_signup.html",
                 {
                     "error":
-                    "That username is already taken."
+                        "That username is already taken."
                 }
             )
-
 
         if Member.objects.filter(
             email=email
@@ -970,10 +1155,9 @@ def member_signup_view(request):
                 "member_signup.html",
                 {
                     "error":
-                    "An account with that email already exists."
+                        "An account with that email already exists."
                 }
             )
-
 
         user = User.objects.create_user(
             username=username,
@@ -981,14 +1165,12 @@ def member_signup_view(request):
             email=email
         )
 
-
         Member.objects.create(
             user=user,
             name=name,
             email=email,
             phone=phone
         )
-
 
         login(
             request,
@@ -998,7 +1180,6 @@ def member_signup_view(request):
         return redirect(
             "member_dashboard"
         )
-
 
     return render(
         request,
@@ -1013,16 +1194,16 @@ def member_dashboard_view(request):
 
     today = date.today()
 
-
     active_records = (
         BorrowRecord.objects
         .filter(
             member=member,
             returned_on__isnull=True
         )
-        .select_related("book")
+        .select_related(
+            "book"
+        )
     )
-
 
     history_records = (
         BorrowRecord.objects
@@ -1030,13 +1211,15 @@ def member_dashboard_view(request):
             member=member,
             returned_on__isnull=False
         )
-        .select_related("book")
-        .order_by("-returned_on")
+        .select_related(
+            "book"
+        )
+        .order_by(
+            "-returned_on"
+        )
     )
 
-
     active_books = []
-
 
     for r in active_records:
 
@@ -1063,9 +1246,7 @@ def member_dashboard_view(request):
                 overdue,
         })
 
-
     history = []
-
 
     for r in history_records:
 
@@ -1083,7 +1264,6 @@ def member_dashboard_view(request):
                     "%b %d, %Y"
                 ),
         })
-
 
     return render(
         request,
@@ -1113,13 +1293,11 @@ def member_settings_view(request):
     message = None
     error = None
 
-
     if request.method == "POST":
 
         form_type = request.POST.get(
             "form_type"
         )
-
 
         if form_type == "profile_info":
 
@@ -1133,7 +1311,6 @@ def member_settings_view(request):
                 ""
             ).strip()
 
-
             if new_name:
 
                 member.name = new_name
@@ -1145,14 +1322,12 @@ def member_settings_view(request):
                 "Profile updated successfully!"
             )
 
-
         elif form_type == "change_password":
 
             password_form = PasswordChangeForm(
                 user=request.user,
                 data=request.POST
             )
-
 
             if password_form.is_valid():
 
@@ -1178,7 +1353,6 @@ def member_settings_view(request):
                 error = (
                     "Please fix the errors below."
                 )
-
 
     return render(
         request,
