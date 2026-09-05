@@ -8,6 +8,8 @@ fetch("/library/api/reports/")
   })
   .then(data => {
 
+    console.log("REPORT DATA:", data);
+
     document.getElementById("rTotalBooks").textContent =
       data.total_books ?? 0;
 
@@ -15,14 +17,13 @@ fetch("/library/api/reports/")
       data.total_members ?? 0;
 
     document.getElementById("rBorrowed").textContent =
-      data.active_borrowed ?? 0;
+      data.currently_borrowed ?? 0;
 
     document.getElementById("rOverdue").textContent =
-      data.overdue_books ?? 0;
+      data.overdue ?? 0;
 
     document.getElementById("rReturned").textContent =
-      data.returned_books ?? 0;
-
+      data.total_returned ?? 0;
   })
   .catch(error => {
     console.error("Error loading reports:", error);
