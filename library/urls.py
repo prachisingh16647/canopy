@@ -30,6 +30,7 @@ urlpatterns = [
     path('api/delete-member/<int:member_id>/', views.delete_member, name='delete_member'),
     path('api/edit-book/<int:book_id>/', views.edit_book, name='edit_book'),
     path('api/due-books/', views.due_books, name='due_books'),
+    path('api/edit-due-date/<int:record_id>/', views.edit_due_date, name='edit_due_date'),
     path('api/reports/', views.reports_data, name='reports_data'),
 
     # ================= Member Portal =================
