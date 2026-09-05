@@ -1,25 +1,34 @@
 function loadDueBooks() {
 
     fetch("/library/api/due-books/")
-        .then(res => {
-            if (!res.ok) {
+        .then(response => {
+
+            if (!response.ok) {
                 throw new Error("Failed to load due books");
             }
 
-            return res.json();
+            return response.json();
         })
 
         .then(data => {
 
-            const tbody = document.getElementById("dueBooksBody");
+            const tbody =
+                document.getElementById("dueBooksBody");
+
+            if (!tbody) {
+                console.error("dueBooksBody element not found");
+                return;
+            }
 
             tbody.innerHTML = "";
 
-            if (data.records.length === 0) {
+            const records = data.records || [];
+
+            if (records.length === 0) {
 
                 tbody.innerHTML = `
                     <tr>
-                        <td colspan="5">
+                        <td colspan="5" style="text-align:center;">
                             No due or overdue books 🎉
                         </td>
                     </tr>
@@ -29,7 +38,7 @@ function loadDueBooks() {
             }
 
 
-            data.records.forEach(r => {
+            records.forEach(r => {
 
                 const statusClass =
                     r.status === "Overdue"
@@ -43,15 +52,23 @@ function loadDueBooks() {
                         : `${r.status} (${r.days} day(s) left)`;
 
 
-                const row = document.createElement("tr");
+                const row =
+                    document.createElement("tr");
 
 
                 row.innerHTML = `
-                    <td>${r.book}</td>
 
-                    <td>${r.member}</td>
+                    <td>
+                        ${r.book}
+                    </td>
 
-                    <td>${r.due_date}</td>
+                    <td>
+                        ${r.member}
+                    </td>
+
+                    <td>
+                        ${r.due_date}
+                    </td>
 
                     <td>
                         <span class="${statusClass}">
@@ -61,29 +78,13 @@ function loadDueBooks() {
 
                     <td>
                         <button
-                            type="button"
-                            class="edit-due-btn"
-                        >
-                            <i class="fa-solid fa-pen"></i>
+                            class="edit"
+                            data-id="${r.id}">
                             Edit
                         </button>
                     </td>
+
                 `;
-
-
-                const editButton =
-                    row.querySelector(".edit-due-btn");
-
-
-                editButton.addEventListener("click", () => {
-
-                    editDueDate(
-                        r.id,
-                        r.book,
-                        r.due_date
-                    );
-
-                });
 
 
                 tbody.appendChild(row);
@@ -104,12 +105,66 @@ function loadDueBooks() {
 }
 
 
+/* =========================================================
+   INITIAL LOAD
+========================================================= */
+
+loadDueBooks();
+
+
+/* =========================================================
+   EDIT BUTTONS
+========================================================= */
+
+const dueBooksBody =
+    document.getElementById("dueBooksBody");
+
+
+if (dueBooksBody) {
+
+    dueBooksBody.addEventListener("click", event => {
+
+        if (!event.target.classList.contains("edit")) {
+            return;
+        }
+
+
+        const recordId =
+            event.target.dataset.id;
+
+
+        const row =
+            event.target.closest("tr");
+
+
+        const bookName =
+            row.cells[0].textContent.trim();
+
+
+        const currentDate =
+            row.cells[2].textContent.trim();
+
+
+        editDueDate(
+            recordId,
+            bookName,
+            currentDate
+        );
+
+    });
+
+}
+
 
 /* =========================================================
    EDIT DUE DATE
 ========================================================= */
 
-function editDueDate(recordId, bookName, currentDate) {
+function editDueDate(
+    recordId,
+    bookName,
+    currentDate
+) {
 
     const newDate = prompt(
         `Enter the new due date for "${bookName}"\n\nFormat: YYYY-MM-DD`,
@@ -122,7 +177,8 @@ function editDueDate(recordId, bookName, currentDate) {
     }
 
 
-    const trimmedDate = newDate.trim();
+    const trimmedDate =
+        newDate.trim();
 
 
     if (!trimmedDate) {
@@ -133,7 +189,8 @@ function editDueDate(recordId, bookName, currentDate) {
     }
 
 
-    const datePattern = /^\d{4}-\d{2}-\d{2}$/;
+    const datePattern =
+        /^\d{4}-\d{2}-\d{2}$/;
 
 
     if (!datePattern.test(trimmedDate)) {
@@ -168,30 +225,40 @@ function editDueDate(recordId, bookName, currentDate) {
     }
 
 
-    fetch(`/library/api/edit-due-date/${recordId}/`, {
+    fetch(
+        `/library/api/edit-due-date/${recordId}/`,
+        {
+            method: "POST",
 
-        method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
 
-        headers: {
-            "Content-Type": "application/json"
-        },
+            body: JSON.stringify({
+                due_date: trimmedDate
+            })
+        }
+    )
 
-        body: JSON.stringify({
-            due_date: trimmedDate
-        })
-
-    })
-
-        .then(res => res.json())
+        .then(response => response.json())
 
         .then(data => {
 
+            if (data.error) {
+
+                alert(data.error);
+
+                return;
+            }
+
+
             if (!data.success) {
 
-                throw new Error(
-                    data.error || "Unable to update due date."
+                alert(
+                    "Unable to update the due date."
                 );
 
+                return;
             }
 
 
@@ -207,23 +274,15 @@ function editDueDate(recordId, bookName, currentDate) {
         .catch(error => {
 
             console.error(
-                "Edit due date error:",
+                "Error editing due date:",
                 error
             );
 
 
             alert(
-                "Something went wrong while updating the due date."
+                "Something went wrong while editing the due date."
             );
 
         });
 
 }
-
-
-
-/* =========================================================
-   INITIAL LOAD
-========================================================= */
-
-loadDueBooks();
