@@ -315,6 +315,7 @@ def all_books(request):
     books = Book.objects.all().order_by('-added_on')
     data = [
         {
+            "id": b.id,
             "title": b.title,
             "author": b.author,
             "status": "Available" if b.is_available else "Borrowed",
@@ -329,6 +330,7 @@ def all_members(request):
     members = Member.objects.all().order_by('-join_on')
     data = [
         {
+             "id": m.id,
             "name": m.name,
             "email": m.email,
             "phone": m.phone or "N/A",
