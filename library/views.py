@@ -695,6 +695,8 @@ def edit_due_date(request, record_id):
         )       
 # ==================== REPORTS API ====================
 
+
+
 def reports_data(request):
 
     today = date.today()
@@ -703,41 +705,29 @@ def reports_data(request):
 
     total_members = Member.objects.count()
 
-    total_borrowed = BorrowRecord.objects.count()
-
+    # Only books that are currently borrowed
     active_borrowed = BorrowRecord.objects.filter(
         returned_on__isnull=True
     ).count()
 
-    returned_books = BorrowRecord.objects.filter(
-        returned_on__isnull=False
-    ).count()
-
+    # Only currently borrowed books that are overdue
     overdue_books = BorrowRecord.objects.filter(
         returned_on__isnull=True,
         due_date__lt=today
     ).count()
 
+    # Total books that have been returned
+    returned_books = BorrowRecord.objects.filter(
+        returned_on__isnull=False
+    ).count()
+
     return JsonResponse({
-        "total_books":
-            total_books,
-
-        "total_members":
-            total_members,
-
-        "total_borrowed":
-            total_borrowed,
-
-        "active_borrowed":
-            active_borrowed,
-
-        "returned_books":
-            returned_books,
-
-        "overdue_books":
-            overdue_books,
+        "total_books": total_books,
+        "total_members": total_members,
+        "active_borrowed": active_borrowed,
+        "overdue_books": overdue_books,
+        "returned_books": returned_books
     })
-
 
 # ==================== DASHBOARD ====================
 
