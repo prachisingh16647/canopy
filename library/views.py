@@ -578,7 +578,6 @@ def due_books(request):
         "records": data
     })
 
-
 # ==================== EDIT DUE DATE ====================
 
 @csrf_exempt
@@ -593,13 +592,9 @@ def edit_due_date(request, record_id):
 
     try:
 
-        data = json.loads(
-            request.body
-        )
+        data = json.loads(request.body)
 
-        new_due_date = data.get(
-            "due_date"
-        )
+        new_due_date = data.get("due_date")
 
         if not new_due_date:
 
@@ -611,14 +606,25 @@ def edit_due_date(request, record_id):
                 status=400
             )
 
-        record = BorrowRecord.objects.get(
-            id=record_id,
-            returned_on__isnull=True
-        )
+        # Find the active borrowing record
+        try:
 
-        # JavaScript sends YYYY-MM-DD as a string.
-        # Convert it into a Python date object.
+            record = BorrowRecord.objects.get(
+                id=record_id,
+                returned_on__isnull=True
+            )
 
+        except BorrowRecord.DoesNotExist:
+
+            return JsonResponse(
+                {
+                    "error":
+                        "Active borrow record not found."
+                },
+                status=404
+            )
+
+        # Convert YYYY-MM-DD into a real Python date
         try:
 
             new_due_date = datetime.strptime(
@@ -631,12 +637,43 @@ def edit_due_date(request, record_id):
             return JsonResponse(
                 {
                     "error":
-                        "Invalid date format. "
-                        "Use YYYY-MM-DD."
+                        "Invalid date. Please enter a valid date "
+                        "in YYYY-MM-DD format."
                 },
                 status=400
             )
 
+        today = date.today()
+
+        # Rule 1: Cannot select a past date
+        if new_due_date < today:
+
+            return JsonResponse(
+                {
+                    "error":
+                        "Due date cannot be in the past."
+                },
+                status=400
+            )
+
+        # Rule 2: Maximum is 14 days after the book was issued
+        maximum_due_date = (
+            record.borrowed_on +
+            timezone.timedelta(days=14)
+        )
+
+        if new_due_date > maximum_due_date:
+
+            return JsonResponse(
+                {
+                    "error":
+                        "Due date cannot be more than "
+                        "14 days after the issue date."
+                },
+                status=400
+            )
+
+        # Date passed all checks
         record.due_date = new_due_date
         record.save()
 
@@ -648,16 +685,6 @@ def edit_due_date(request, record_id):
                 )
         })
 
-    except BorrowRecord.DoesNotExist:
-
-        return JsonResponse(
-            {
-                "error":
-                    "Active borrow record not found."
-            },
-            status=404
-        )
-
     except Exception as e:
 
         return JsonResponse(
@@ -665,9 +692,7 @@ def edit_due_date(request, record_id):
                 "error": str(e)
             },
             status=400
-        )
-
-
+        )       
 # ==================== REPORTS API ====================
 
 def reports_data(request):
