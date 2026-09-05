@@ -129,21 +129,71 @@ def add_book(request):
 
 
 @csrf_exempt
-def edit_book(request, book_id):
+def edit_due_date(request, record_id):
+
     if request.method == "POST":
-        data = json.loads(request.body)
+
         try:
-            book = Book.objects.get(id=book_id)
-        except Book.DoesNotExist:
-            return JsonResponse({"error": "Book not found"}, status=404)
+            data = json.loads(request.body)
 
-        book.title = data.get("title", book.title)
-        book.author = data.get("author", book.author)
-        book.cover_image = data.get("cover", book.cover_image)
-        book.save()
-        return JsonResponse({"success": True})
-    return JsonResponse({"error": "Invalid method"}, status=405)
+            new_due_date = data.get("due_date")
 
+            if not new_due_date:
+                return JsonResponse(
+                    {"error": "Due date is required."},
+                    status=400
+                )
+
+            record = BorrowRecord.objects.get(
+                id=record_id,
+                returned_on__isnull=True
+            )
+
+            # Convert YYYY-MM-DD string into a Python date object
+            from datetime import datetime
+
+            try:
+                new_due_date = datetime.strptime(
+                    new_due_date,
+                    "%Y-%m-%d"
+                ).date()
+
+            except ValueError:
+                return JsonResponse(
+                    {
+                        "error": "Invalid date format. Use YYYY-MM-DD."
+                    },
+                    status=400
+                )
+
+            record.due_date = new_due_date
+            record.save()
+
+            return JsonResponse({
+                "success": True,
+                "due_date": record.due_date.strftime("%b %d, %Y")
+            })
+
+        except BorrowRecord.DoesNotExist:
+
+            return JsonResponse(
+                {
+                    "error": "Active borrow record not found."
+                },
+                status=404
+            )
+
+        except Exception as e:
+
+            return JsonResponse(
+                {"error": str(e)},
+                status=400
+            )
+
+    return JsonResponse(
+        {"error": "Invalid method"},
+        status=405
+    )
 
 @csrf_exempt
 def delete_book(request, book_id):
